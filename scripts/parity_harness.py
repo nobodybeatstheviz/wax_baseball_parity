@@ -1,47 +1,53 @@
 #!/usr/bin/env python3
 """
-The golden-question parity harness: runs the five golden questions against
-every engine holding the Keeping Score corpus and diffs the results against
-the reference answers (recorded from BigQuery + MetricFlow, 2026-08-31).
+The golden-question parity harness — v2: DEFINITION parity.
 
-v1 verifies DATA parity: direct SQL against the ported marts. When each
-engine's semantic layer lands (W2s Cortex, W3s metric views, W4 SDMs), the
-per-engine SQL here upgrades to query THROUGH that semantic layer, making
-this definition parity. The reference values do not change either way.
+Each engine answers the golden questions THROUGH ITS OWN SEMANTIC LAYER:
+    bigquery    MetricFlow (dbt semantic layer, via the mf CLI + SL venv)
+    databricks  Unity Catalog metric views (MEASURE() queries, W3s)
+    snowflake   Cortex semantic view (W2s; raw-SQL fallback marked until wired)
+
+and the results are diffed against the reference answers recorded from
+BigQuery + MetricFlow on 2026-08-31. v1 (data parity, raw SQL over the
+ported marts) lives in git history.
 
 Output: regenerates wax-system/wax-baseball/parity-receipts.md (Presentation
 layer — never hand-edited).
 
 Usage:
     python scripts/parity_harness.py
-
-Engines and auth (all pre-verified in Wave 0):
-    bigquery   google-cloud-bigquery, ADC
-    snowflake  snow CLI, connection wax_baseball_key (keypair)
-    databricks databricks-sql-connector via ~/.databrickscfg (see _dbx_conn)
 """
 
 from __future__ import annotations
 
+import csv
 import datetime
 import json
+import os
 import pathlib
 import shutil
 import subprocess
 import sys
+import tempfile
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 from _dbx_conn import get_connection as dbx_connection  # noqa: E402
 
-from google.cloud import bigquery  # noqa: E402
-
 RECEIPT_PATH = pathlib.Path(r"C:\Users\georg\wax-system\wax-baseball\parity-receipts.md")
 
 BQ_PROJECT = "augmented-world-262319"
-BQ = f"`{BQ_PROJECT}.wax_baseball_dbt"          # reference engine: the marts themselves
-SF = "BASEBALL.WAX_BASEBALL"                     # ported corpus
-DBX = "wax_baseball.parity"                      # ported corpus
+DBT_PROJECT_DIR = r"C:\Users\georg\Documents\CODING\wax_baseball_dbt"
+MF_EXE = r"C:\Users\georg\Documents\CODING\dbt-core-sl-venv\Scripts\mf.exe"
+SF = "BASEBALL.WAX_BASEBALL"                 # ported corpus (raw-SQL fallback)
+DBX_MV = "wax_baseball.semantics"            # UC metric views (W3s)
 SNOW = shutil.which("snow") or r"C:\Users\georg\AppData\Roaming\Python\Python313\Scripts\snow.exe"
+
+ENGINES = ["bigquery", "databricks", "snowflake"]
+ENGINE_LAYER = {
+    "bigquery": "MetricFlow (dbt SL)",
+    "databricks": "UC metric views",
+    "snowflake": "native SEMANTIC VIEW (BASEBALL.SEMANTICS.KEEPING_SCORE)",
+}
 
 # ---------------------------------------------------------------------------
 # Reference answers — recorded 2026-08-31 from BigQuery via MetricFlow
@@ -55,97 +61,122 @@ REF_G1 = {
     2010: 5, 2011: 11, 2012: 3, 2013: 3, 2014: 1, 2017: 1, 2018: 1,
     2022: 3, 2023: 1, 2024: 5, 2025: 4,
 }
-REF_G2 = 400                          # home_runs_witnessed
+REF_G2 = 400
 REF_G3 = [("Melissa", 57), ("Bergan", 27), ("Al", 26), ("solo", 16), ("Poppa", 14)]
-REF_G4 = {"team": "NYA", "wins": 90, "decided": 143}   # attended_win_rate spot-check
-REF_G5 = 44                           # hall_of_famers_seen
-REF_SCALARS = {"games_attended": 178, "unique_stadiums": 22, "runs_witnessed": 1706}
+REF_G4 = {"wins": 90, "decided": 143}
+REF_G5 = 44
+REF_G0A = {"games_attended": 178, "unique_stadiums": 22}
+REF_G0B = 1706
 
 # ---------------------------------------------------------------------------
-# The questions. Per-engine SQL is intentionally explicit — it is the preview
-# of what each engine's semantic layer must re-express in W2s/W3s/W4.
-# Snowflake identifiers are quoted lowercase (INFER_SCHEMA preserves Parquet
-# column case), matching the Lahman quoted-identifier convention there.
+# Per-engine question specs. Each spec is ("mf", [cli args]) or ("sql", text).
+# Comparators consume rows POSITIONALLY (column order is part of the spec),
+# so MetricFlow's dunder headers and SQL aliases don't need to agree.
 # ---------------------------------------------------------------------------
 
 QUESTIONS = {
     "G1 games attended by year": {
         "kind": "year_counts",
         "reference": REF_G1,
-        "bigquery": f"SELECT EXTRACT(YEAR FROM game_date) AS yr, COUNT(*) AS n FROM {BQ}.fct_attended_games` GROUP BY yr ORDER BY yr",
-        "snowflake": f'SELECT EXTRACT(YEAR FROM "game_date") AS yr, COUNT(*) AS n FROM {SF}.fct_attended_games GROUP BY yr ORDER BY yr',
-        "databricks": f"SELECT EXTRACT(YEAR FROM game_date) AS yr, COUNT(*) AS n FROM {DBX}.fct_attended_games GROUP BY yr ORDER BY yr",
+        "bigquery": ("mf", ["--metrics", "games_attended", "--group-by", "metric_time__year", "--order", "metric_time__year"]),
+        "databricks": ("sql", f"SELECT YEAR(game_date) AS yr, MEASURE(games_attended) AS n FROM {DBX_MV}.mv_attended_games GROUP BY YEAR(game_date) ORDER BY yr"),
+        "snowflake": ("sql", "SELECT * FROM SEMANTIC_VIEW(BASEBALL.SEMANTICS.KEEPING_SCORE DIMENSIONS attended_games.year METRICS attended_games.games_attended) ORDER BY YEAR"),
     },
     "G2 home runs witnessed": {
         "kind": "scalar",
         "reference": REF_G2,
-        "bigquery": f"SELECT SUM(CASE WHEN event_code = 23 THEN 1 ELSE 0 END) AS v FROM {BQ}.fct_plays`",
-        "snowflake": f'SELECT SUM(CASE WHEN "event_code" = 23 THEN 1 ELSE 0 END) AS v FROM {SF}.fct_plays',
-        "databricks": f"SELECT SUM(CASE WHEN event_code = 23 THEN 1 ELSE 0 END) AS v FROM {DBX}.fct_plays",
+        "bigquery": ("mf", ["--metrics", "home_runs_witnessed"]),
+        "databricks": ("sql", f"SELECT MEASURE(home_runs_witnessed) AS v FROM {DBX_MV}.mv_plays"),
+        "snowflake": ("sql", "SELECT * FROM SEMANTIC_VIEW(BASEBALL.SEMANTICS.KEEPING_SCORE METRICS plays.home_runs_witnessed)"),
     },
     "G3 top-5 attendees by games": {
         "kind": "ranked",
         "reference": REF_G3,
-        "bigquery": f"SELECT attendee_name AS k, COUNT(*) AS n FROM {BQ}.fct_game_attendee` GROUP BY k ORDER BY n DESC, k LIMIT 5",
-        "snowflake": f'SELECT "attendee_name" AS k, COUNT(*) AS n FROM {SF}.fct_game_attendee GROUP BY k ORDER BY n DESC, k LIMIT 5',
-        "databricks": f"SELECT attendee_name AS k, COUNT(*) AS n FROM {DBX}.fct_game_attendee GROUP BY k ORDER BY n DESC, k LIMIT 5",
+        "bigquery": ("mf", ["--metrics", "games_per_attendee", "--group-by", "game_attendee__attendee_name", "--order", "-games_per_attendee", "--limit", "5"]),
+        "databricks": ("sql", f"SELECT attendee_name AS k, MEASURE(games_per_attendee) AS n FROM {DBX_MV}.mv_game_attendee GROUP BY attendee_name ORDER BY n DESC, k LIMIT 5"),
+        "snowflake": ("sql", "SELECT * FROM SEMANTIC_VIEW(BASEBALL.SEMANTICS.KEEPING_SCORE DIMENSIONS game_attendee.attendee_name METRICS game_attendee.games_per_attendee) ORDER BY GAMES_PER_ATTENDEE DESC, ATTENDEE_NAME LIMIT 5"),
     },
     "G4 attended win rate (NYA spot-check)": {
         "kind": "win_rate",
         "reference": REF_G4,
-        "bigquery": f"SELECT SUM(CASE WHEN team_won THEN 1 ELSE 0 END) AS wins, SUM(CASE WHEN is_decided THEN 1 ELSE 0 END) AS decided FROM {BQ}.fct_attended_team_games` WHERE team_id = 'NYA'",
-        "snowflake": f'SELECT SUM(CASE WHEN "team_won" THEN 1 ELSE 0 END) AS wins, SUM(CASE WHEN "is_decided" THEN 1 ELSE 0 END) AS decided FROM {SF}.fct_attended_team_games WHERE "team_id" = \'NYA\'',
-        "databricks": f"SELECT SUM(CASE WHEN team_won THEN 1 ELSE 0 END) AS wins, SUM(CASE WHEN is_decided THEN 1 ELSE 0 END) AS decided FROM {DBX}.fct_attended_team_games WHERE team_id = 'NYA'",
+        "bigquery": ("mf", ["--metrics", "team_wins_attended,team_games_decided", "--group-by", "attended_team_game__team", "--where", "{{ Dimension('attended_team_game__team') }} = 'NYA'"]),
+        "databricks": ("sql", f"SELECT team_id, MEASURE(team_wins_attended) AS wins, MEASURE(team_games_decided) AS decided FROM {DBX_MV}.mv_attended_team_games WHERE team_id = 'NYA' GROUP BY team_id"),
+        "snowflake": ("sql", "SELECT * FROM SEMANTIC_VIEW(BASEBALL.SEMANTICS.KEEPING_SCORE DIMENSIONS attended_team_games.team_id METRICS attended_team_games.team_wins_attended, attended_team_games.team_games_decided) WHERE TEAM_ID = 'NYA'"),
     },
     "G5 Hall of Famers seen": {
         "kind": "scalar",
         "reference": REF_G5,
-        "bigquery": f"SELECT COUNT(*) AS v FROM {BQ}.fct_hof_sightings`",
-        "snowflake": f"SELECT COUNT(*) AS v FROM {SF}.fct_hof_sightings",
-        "databricks": f"SELECT COUNT(*) AS v FROM {DBX}.fct_hof_sightings",
+        "bigquery": ("mf", ["--metrics", "hall_of_famers_seen"]),
+        "databricks": ("sql", f"SELECT MEASURE(hall_of_famers_seen) AS v FROM {DBX_MV}.mv_hof_sightings"),
+        "snowflake": ("sql", "SELECT * FROM SEMANTIC_VIEW(BASEBALL.SEMANTICS.KEEPING_SCORE METRICS hof_sightings.hall_of_famers_seen)"),
     },
-    "G0 corpus scalars (games / stadiums / runs)": {
-        "kind": "scalars3",
-        "reference": REF_SCALARS,
-        "bigquery": f"SELECT (SELECT COUNT(*) FROM {BQ}.fct_attended_games`) AS games_attended, (SELECT COUNT(DISTINCT venue_wax) FROM {BQ}.fct_attended_games`) AS unique_stadiums, (SELECT SUM(runs_on_play) FROM {BQ}.fct_plays`) AS runs_witnessed",
-        "snowflake": f'SELECT (SELECT COUNT(*) FROM {SF}.fct_attended_games) AS games_attended, (SELECT COUNT(DISTINCT "venue_wax") FROM {SF}.fct_attended_games) AS unique_stadiums, (SELECT SUM("runs_on_play") FROM {SF}.fct_plays) AS runs_witnessed',
-        "databricks": f"SELECT (SELECT COUNT(*) FROM {DBX}.fct_attended_games) AS games_attended, (SELECT COUNT(DISTINCT venue_wax) FROM {DBX}.fct_attended_games) AS unique_stadiums, (SELECT SUM(runs_on_play) FROM {DBX}.fct_plays) AS runs_witnessed",
+    "G0a games attended / unique stadiums": {
+        "kind": "pair",
+        "reference": REF_G0A,
+        "bigquery": ("mf", ["--metrics", "games_attended,unique_stadiums"]),
+        "databricks": ("sql", f"SELECT MEASURE(games_attended) AS a, MEASURE(unique_stadiums) AS b FROM {DBX_MV}.mv_attended_games"),
+        "snowflake": ("sql", "SELECT * FROM SEMANTIC_VIEW(BASEBALL.SEMANTICS.KEEPING_SCORE METRICS attended_games.games_attended, attended_games.unique_stadiums)"),
+    },
+    "G0b runs witnessed": {
+        "kind": "scalar",
+        "reference": REF_G0B,
+        "bigquery": ("mf", ["--metrics", "runs_witnessed"]),
+        "databricks": ("sql", f"SELECT MEASURE(runs_witnessed) AS v FROM {DBX_MV}.mv_plays"),
+        "snowflake": ("sql", "SELECT * FROM SEMANTIC_VIEW(BASEBALL.SEMANTICS.KEEPING_SCORE METRICS plays.runs_witnessed)"),
     },
 }
 
-ENGINES = ["bigquery", "snowflake", "databricks"]
-
 
 # ---------------------------------------------------------------------------
-# Engine runners — each returns a list of dicts with lowercase keys.
+# Engine runners — each returns rows as list-of-lists (positional).
 # ---------------------------------------------------------------------------
 
-def run_bigquery(sql: str) -> list[dict]:
-    client = bigquery.Client(project=BQ_PROJECT)
-    return [{k.lower(): v for k, v in dict(row).items()} for row in client.query(sql).result()]
+def run_bigquery(spec) -> list[list]:
+    """MetricFlow via the SL venv's mf CLI, CSV output."""
+    _, args = spec
+    with tempfile.TemporaryDirectory() as tmp:
+        out_csv = pathlib.Path(tmp) / "out.csv"
+        env = dict(os.environ, DBT_PROFILES_DIR=r"C:\Users\georg\.dbt", PYTHONUTF8="1")
+        result = subprocess.run(
+            [MF_EXE, "query", *args, "--csv", str(out_csv)],
+            capture_output=True, text=True, cwd=DBT_PROJECT_DIR, env=env,
+        )
+        if result.returncode != 0 or not out_csv.exists():
+            raise RuntimeError(f"mf query failed: {(result.stderr or result.stdout).strip()[:300]}")
+        with out_csv.open(newline="", encoding="utf-8") as fh:
+            rows = [row for row in csv.reader(fh) if row]
+        # mf --csv may or may not emit a header row; detect by whether the
+        # last cell of row 0 parses as a number (all our queries end numeric).
+        if rows:
+            try:
+                float(rows[0][-1])
+            except ValueError:
+                rows = rows[1:]
+        return rows
 
 
-def run_snowflake(sql: str) -> list[dict]:
+def run_snowflake(spec) -> list[list]:
+    _, sql = spec
     out = subprocess.run(
         [SNOW, "sql", "-c", "wax_baseball_key", "--format", "json", "-q", sql],
         capture_output=True, text=True,
     )
     if out.returncode != 0:
-        raise RuntimeError(f"snow sql failed: {out.stderr.strip()[:500]}")
-    return [{k.lower(): v for k, v in row.items()} for row in json.loads(out.stdout)]
+        raise RuntimeError(f"snow sql failed: {out.stderr.strip()[:300]}")
+    return [list(row.values()) for row in json.loads(out.stdout)]
 
 
 _dbx_conn = None
 
 
-def run_databricks(sql: str) -> list[dict]:
+def run_databricks(spec) -> list[list]:
     global _dbx_conn
     if _dbx_conn is None:
         _dbx_conn = dbx_connection()
+    _, sql = spec
     cursor = _dbx_conn.cursor()
     cursor.execute(sql)
-    cols = [d[0].lower() for d in cursor.description]
-    rows = [dict(zip(cols, r)) for r in cursor.fetchall()]
+    rows = [list(r) for r in cursor.fetchall()]
     cursor.close()
     return rows
 
@@ -154,25 +185,31 @@ RUNNERS = {"bigquery": run_bigquery, "snowflake": run_snowflake, "databricks": r
 
 
 # ---------------------------------------------------------------------------
-# Comparators per question kind: (rows, reference) -> (pass, observed_summary)
+# Comparators — positional. (rows, reference) -> (pass, observed_summary)
 # ---------------------------------------------------------------------------
 
-def compare(kind: str, rows: list[dict], ref):
+def _year(v) -> int:
+    return int(str(v)[:4])
+
+
+def compare(kind: str, rows: list[list], ref):
     if kind == "scalar":
-        got = int(rows[0]["v"])
+        got = int(float(rows[0][0]))
         return got == ref, str(got)
-    if kind == "scalars3":
-        got = {k: int(rows[0][k]) for k in ref}
-        return got == ref, " / ".join(str(got[k]) for k in ref)
+    if kind == "pair":
+        a, b = (int(float(rows[0][0])), int(float(rows[0][1])))
+        want = list(ref.values())
+        return [a, b] == want, f"{a} / {b}"
     if kind == "year_counts":
-        got = {int(r["yr"]): int(r["n"]) for r in rows}
+        got = {_year(r[0]): int(float(r[1])) for r in rows}
         return got == ref, f"{len(got)} years, sum {sum(got.values())}"
     if kind == "ranked":
-        got = [(str(r["k"]), int(r["n"])) for r in rows]
+        got = [(str(r[0]), int(float(r[1]))) for r in rows]
         return got == ref, ", ".join(f"{k} {n}" for k, n in got)
     if kind == "win_rate":
-        got = {"team": ref["team"], "wins": int(rows[0]["wins"]), "decided": int(rows[0]["decided"])}
-        return got == ref, f"{got['wins']}-{got['decided'] - got['wins']} in {got['decided']} decided"
+        wins, decided = int(float(rows[0][-2])), int(float(rows[0][-1]))
+        ok = wins == ref["wins"] and decided == ref["decided"]
+        return ok, f"{wins}-{decided - wins} in {decided} decided"
     raise ValueError(kind)
 
 
@@ -187,7 +224,7 @@ def main() -> None:
             except Exception as exc:  # noqa: BLE001 — a failing engine is a finding, not a crash
                 results[q][engine] = (False, f"ERROR: {str(exc)[:120]}")
             ok, obs = results[q][engine]
-            print(f"  {q:44s} {engine:10s} {'PASS' if ok else 'FAIL'}  {obs}")
+            print(f"  {q:40s} {engine:10s} {'PASS' if ok else 'FAIL'}  {obs}")
 
     all_pass = all(ok for per_q in results.values() for ok, _ in per_q.values())
 
@@ -196,10 +233,13 @@ def main() -> None:
         "# Parity receipts — Keeping Score",
         "",
         "<!-- Generated - do not hand-edit. Rebuild: py scripts/parity_harness.py",
-        "     in CODING/wax_baseball_parity (v1 = data parity over the ported marts;",
-        "     upgrades to semantic-layer parity as W2s/W3s/W4 land). -->",
+        "     in CODING/wax_baseball_parity. v2 = definition parity: each engine",
+        "     answers through its own semantic layer. -->",
         "",
         f"*Generated {stamp}. Reference answers: BigQuery via MetricFlow, recorded 2026-08-31.*",
+        "",
+        "**Answering layer per engine:** "
+        + " · ".join(f"{e} = {ENGINE_LAYER[e]}" for e in ENGINES),
         "",
         f"**Overall: {'✅ all engines match the reference' if all_pass else '❌ MISMATCH — see table'}**",
         "",
@@ -212,7 +252,8 @@ def main() -> None:
         "G3 top-5 attendees by games": "Melissa 57, Bergan 27, Al 26, solo 16, Poppa 14",
         "G4 attended win rate (NYA spot-check)": "90-53 in 143 decided (.629)",
         "G5 Hall of Famers seen": "44",
-        "G0 corpus scalars (games / stadiums / runs)": "178 / 22 / 1706",
+        "G0a games attended / unique stadiums": "178 / 22",
+        "G0b runs witnessed": "1706",
     }
     for q in QUESTIONS:
         cells = []
@@ -223,9 +264,9 @@ def main() -> None:
 
     lines += [
         "",
-        "The identical corpus behind these numbers: BigQuery `wax_baseball_dbt` (reference) · "
-        "Snowflake `BASEBALL.WAX_BASEBALL` · Databricks `wax_baseball.parity` — 8 marts, "
-        "ported by the generators in `CODING/wax_baseball_parity` + "
+        "Corpus: BigQuery `wax_baseball_dbt` (reference) · Snowflake `BASEBALL.WAX_BASEBALL` · "
+        "Databricks `wax_baseball.parity` (semantic layer: `wax_baseball.semantics` metric views) — "
+        "8 marts, ported by the generators in `CODING/wax_baseball_parity` + "
         "`CODING/wax_baseball_snowflake`.",
         "",
     ]
