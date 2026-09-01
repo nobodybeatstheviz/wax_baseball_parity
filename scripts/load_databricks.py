@@ -38,6 +38,8 @@ TABLES: list[str] = [
     "dim_attendee",
     "dim_event_code",
     "fct_games",
+    "fct_attended_team_games",  # W1: team-game grain (win rate, team as dimension)
+    "fct_hof_sightings",        # W1: the four-way join, materialized once
 ]
 
 PREFERRED_CATALOG = "wax_baseball"
