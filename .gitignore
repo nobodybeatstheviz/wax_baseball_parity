@@ -1,0 +1,15 @@
+# Parquet exports (regenerate via scripts/export_bigquery.py)
+data/
+
+# Python
+__pycache__/
+*.pyc
+
+# Editor
+.vscode/
+.idea/
+*.swp
+
+# Windows
+Thumbs.db
+desktop.ini
