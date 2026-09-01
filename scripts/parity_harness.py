@@ -6,6 +6,11 @@ Each engine answers the golden questions THROUGH ITS OWN SEMANTIC LAYER:
     bigquery    MetricFlow (dbt semantic layer, via the mf CLI + SL venv)
     databricks  Unity Catalog metric views (MEASURE() queries, W3s)
     snowflake   Cortex semantic view (W2s; raw-SQL fallback marked until wired)
+    d360        Keeping_Score SDM via /semantic-engine/gateway (W4) — raw REST
+                through `sf api request rest` (same transport as apply_sdm.py;
+                the d360 MCP query tool wraps this same gateway). Org alias via
+                D360_ORG env var (default devorg); the model id is resolved by
+                apiName at runtime, so the scratch-org replay needs no edits.
 
 and the results are diffed against the reference answers recorded from
 BigQuery + MetricFlow on 2026-08-31. v1 (data parity, raw SQL over the
@@ -41,12 +46,17 @@ MF_EXE = r"C:\Users\georg\Documents\CODING\dbt-core-sl-venv\Scripts\mf.exe"
 SF = "BASEBALL.WAX_BASEBALL"                 # ported corpus (raw-SQL fallback)
 DBX_MV = "wax_baseball.semantics"            # UC metric views (W3s)
 SNOW = shutil.which("snow") or r"C:\Users\georg\AppData\Roaming\Python\Python313\Scripts\snow.exe"
+SF_EXE = shutil.which("sf")                  # npm shim — shutil.which resolves sf.cmd
+D360_ORG = os.environ.get("D360_ORG", "devorg")
+D360_MODEL = "Keeping_Score"
+D360_GATEWAY = "/services/data/v66.0/semantic-engine/gateway"
 
-ENGINES = ["bigquery", "databricks", "snowflake"]
+ENGINES = ["bigquery", "databricks", "snowflake", "d360"]
 ENGINE_LAYER = {
     "bigquery": "MetricFlow (dbt SL)",
     "databricks": "UC metric views",
     "snowflake": "native SEMANTIC VIEW (BASEBALL.SEMANTICS.KEEPING_SCORE)",
+    "d360": f"Keeping_Score SDM (/semantic-engine/gateway, org {D360_ORG})",
 }
 
 # ---------------------------------------------------------------------------
@@ -69,10 +79,38 @@ REF_G0A = {"games_attended": 178, "unique_stadiums": 22}
 REF_G0B = 1706
 
 # ---------------------------------------------------------------------------
-# Per-engine question specs. Each spec is ("mf", [cli args]) or ("sql", text).
+# Per-engine question specs. Each spec is ("mf", [cli args]), ("sql", text),
+# or ("sdm", structuredSemanticQuery, transform-name-or-None).
 # Comparators consume rows POSITIONALLY (column order is part of the spec),
 # so MetricFlow's dunder headers and SQL aliases don't need to agree.
+#
+# SDM notes: calc measures/dims are MODEL-level -> semanticField; raw columns
+# -> tableField with tableName. The gateway has no documented order/filter
+# syntax, so G3's top-5 and G4's NYA selection are named client-side
+# transforms — the DEFINITION stays team/attendee-as-dimension either way.
 # ---------------------------------------------------------------------------
+
+
+def _sf(name: str, alias: str, group: bool = False) -> dict:
+    field = {"expression": {"semanticField": {"name": name}}, "alias": alias}
+    if group:
+        field["rowGrouping"] = True
+    return field
+
+
+def _tf(table: str, name: str, alias: str) -> dict:
+    return {"rowGrouping": True, "alias": alias,
+            "expression": {"tableField": {"name": name, "tableName": table}}}
+
+
+def _sdm(fields: list[dict], transform: str | None = None, limit: int = 100):
+    return ("sdm", {"fields": fields, "options": {"limitOptions": {"limit": limit}}}, transform)
+
+
+SDM_TRANSFORMS = {
+    "top5": lambda rows: sorted(rows, key=lambda r: (-int(float(r[1])), str(r[0])))[:5],
+    "nya": lambda rows: [r for r in rows if str(r[0]) == "NYA"],
+}
 
 QUESTIONS = {
     "G1 games attended by year": {
@@ -81,6 +119,7 @@ QUESTIONS = {
         "bigquery": ("mf", ["--metrics", "games_attended", "--group-by", "metric_time__year", "--order", "metric_time__year"]),
         "databricks": ("sql", f"SELECT YEAR(game_date) AS yr, MEASURE(games_attended) AS n FROM {DBX_MV}.mv_attended_games GROUP BY YEAR(game_date) ORDER BY yr"),
         "snowflake": ("sql", "SELECT * FROM SEMANTIC_VIEW(BASEBALL.SEMANTICS.KEEPING_SCORE DIMENSIONS attended_games.year METRICS attended_games.games_attended) ORDER BY YEAR"),
+        "d360": _sdm([_sf("Game_Year", "yr", group=True), _sf("Games_Attended", "n")]),
     },
     "G2 home runs witnessed": {
         "kind": "scalar",
@@ -88,6 +127,7 @@ QUESTIONS = {
         "bigquery": ("mf", ["--metrics", "home_runs_witnessed"]),
         "databricks": ("sql", f"SELECT MEASURE(home_runs_witnessed) AS v FROM {DBX_MV}.mv_plays"),
         "snowflake": ("sql", "SELECT * FROM SEMANTIC_VIEW(BASEBALL.SEMANTICS.KEEPING_SCORE METRICS plays.home_runs_witnessed)"),
+        "d360": _sdm([_sf("Home_Runs_Witnessed", "hr")]),
     },
     "G3 top-5 attendees by games": {
         "kind": "ranked",
@@ -95,6 +135,7 @@ QUESTIONS = {
         "bigquery": ("mf", ["--metrics", "games_per_attendee", "--group-by", "game_attendee__attendee_name", "--order", "-games_per_attendee", "--limit", "5"]),
         "databricks": ("sql", f"SELECT attendee_name AS k, MEASURE(games_per_attendee) AS n FROM {DBX_MV}.mv_game_attendee GROUP BY attendee_name ORDER BY n DESC, k LIMIT 5"),
         "snowflake": ("sql", "SELECT * FROM SEMANTIC_VIEW(BASEBALL.SEMANTICS.KEEPING_SCORE DIMENSIONS game_attendee.attendee_name METRICS game_attendee.games_per_attendee) ORDER BY GAMES_PER_ATTENDEE DESC, ATTENDEE_NAME LIMIT 5"),
+        "d360": _sdm([_tf("Game_Attendee", "attendee_name", "k"), _sf("Games_per_Attendee", "n")], transform="top5"),
     },
     "G4 attended win rate (NYA spot-check)": {
         "kind": "win_rate",
@@ -102,6 +143,7 @@ QUESTIONS = {
         "bigquery": ("mf", ["--metrics", "team_wins_attended,team_games_decided", "--group-by", "attended_team_game__team", "--where", "{{ Dimension('attended_team_game__team') }} = 'NYA'"]),
         "databricks": ("sql", f"SELECT team_id, MEASURE(team_wins_attended) AS wins, MEASURE(team_games_decided) AS decided FROM {DBX_MV}.mv_attended_team_games WHERE team_id = 'NYA' GROUP BY team_id"),
         "snowflake": ("sql", "SELECT * FROM SEMANTIC_VIEW(BASEBALL.SEMANTICS.KEEPING_SCORE DIMENSIONS attended_team_games.team_id METRICS attended_team_games.team_wins_attended, attended_team_games.team_games_decided) WHERE TEAM_ID = 'NYA'"),
+        "d360": _sdm([_tf("Attended_Team_Games", "team_id", "team"), _sf("Team_Wins_Attended", "wins"), _sf("Team_Games_Decided", "decided")], transform="nya"),
     },
     "G5 Hall of Famers seen": {
         "kind": "scalar",
@@ -109,6 +151,7 @@ QUESTIONS = {
         "bigquery": ("mf", ["--metrics", "hall_of_famers_seen"]),
         "databricks": ("sql", f"SELECT MEASURE(hall_of_famers_seen) AS v FROM {DBX_MV}.mv_hof_sightings"),
         "snowflake": ("sql", "SELECT * FROM SEMANTIC_VIEW(BASEBALL.SEMANTICS.KEEPING_SCORE METRICS hof_sightings.hall_of_famers_seen)"),
+        "d360": _sdm([_sf("Hall_of_Famers_Seen", "hof")]),
     },
     "G0a games attended / unique stadiums": {
         "kind": "pair",
@@ -116,6 +159,7 @@ QUESTIONS = {
         "bigquery": ("mf", ["--metrics", "games_attended,unique_stadiums"]),
         "databricks": ("sql", f"SELECT MEASURE(games_attended) AS a, MEASURE(unique_stadiums) AS b FROM {DBX_MV}.mv_attended_games"),
         "snowflake": ("sql", "SELECT * FROM SEMANTIC_VIEW(BASEBALL.SEMANTICS.KEEPING_SCORE METRICS attended_games.games_attended, attended_games.unique_stadiums)"),
+        "d360": _sdm([_sf("Games_Attended", "a"), _sf("Unique_Stadiums", "b")]),
     },
     "G0b runs witnessed": {
         "kind": "scalar",
@@ -123,6 +167,7 @@ QUESTIONS = {
         "bigquery": ("mf", ["--metrics", "runs_witnessed"]),
         "databricks": ("sql", f"SELECT MEASURE(runs_witnessed) AS v FROM {DBX_MV}.mv_plays"),
         "snowflake": ("sql", "SELECT * FROM SEMANTIC_VIEW(BASEBALL.SEMANTICS.KEEPING_SCORE METRICS plays.runs_witnessed)"),
+        "d360": _sdm([_sf("Runs_Witnessed", "r")]),
     },
 }
 
@@ -181,7 +226,49 @@ def run_databricks(spec) -> list[list]:
     return rows
 
 
-RUNNERS = {"bigquery": run_bigquery, "snowflake": run_snowflake, "databricks": run_databricks}
+_d360_model_id: str | None = None
+
+
+def _sf_rest(endpoint: str, payload: dict | None = None) -> dict:
+    """POST (or GET when payload is None) via the sf CLI's auth for D360_ORG —
+    the same transport apply_sdm.py proved out."""
+    cmd = [SF_EXE, "api", "request", "rest", endpoint, "-o", D360_ORG]
+    tmp = None
+    if payload is not None:
+        with tempfile.NamedTemporaryFile("w", suffix=".json", delete=False, encoding="utf-8") as fh:
+            json.dump(payload, fh)
+            tmp = fh.name
+        cmd += ["--method", "POST", "--body", f"@{tmp}", "--header", "Content-Type: application/json"]
+    try:
+        out = subprocess.run(cmd, capture_output=True, text=True)
+        text = (out.stdout or out.stderr).strip()
+        try:
+            return json.loads(text)
+        except json.JSONDecodeError:
+            raise RuntimeError(f"sf api request non-JSON: {text[:200]}")
+    finally:
+        if tmp:
+            pathlib.Path(tmp).unlink(missing_ok=True)
+
+
+def run_d360(spec) -> list[list]:
+    global _d360_model_id
+    if _d360_model_id is None:
+        models = _sf_rest("/services/data/v66.0/ssot/semantic/models")
+        match = [m for m in models.get("items", []) if m.get("apiName") == D360_MODEL]
+        if not match:
+            raise RuntimeError(f"SDM {D360_MODEL} not found in org {D360_ORG}")
+        _d360_model_id = match[0]["id"]
+    _, query, transform = spec
+    data = _sf_rest(D360_GATEWAY, {"semanticModelId": _d360_model_id, "structuredSemanticQuery": query})
+    if data.get("status") != "SUCCESS":
+        raise RuntimeError(f"semantic query failed: {json.dumps(data)[:200]}")
+    rows = [list(r["values"]) for r in data["queryResults"]["queryData"]["rows"]]
+    return SDM_TRANSFORMS[transform](rows) if transform else rows
+
+
+RUNNERS = {"bigquery": run_bigquery, "snowflake": run_snowflake,
+           "databricks": run_databricks, "d360": run_d360}
 
 
 # ---------------------------------------------------------------------------
@@ -243,8 +330,8 @@ def main() -> None:
         "",
         f"**Overall: {'✅ all engines match the reference' if all_pass else '❌ MISMATCH — see table'}**",
         "",
-        "| Golden question | Reference | " + " | ".join(ENGINES) + " | D360 |",
-        "|---|---|" + "---|" * len(ENGINES) + "---|",
+        "| Golden question | Reference | " + " | ".join(ENGINES) + " |",
+        "|---|---|" + "---|" * len(ENGINES),
     ]
     ref_display = {
         "G1 games attended by year": "34 years, sum 178 (peaks 2001=17, 2003=17)",
@@ -260,14 +347,17 @@ def main() -> None:
         for engine in ENGINES:
             ok, obs = results[q][engine]
             cells.append(f"{'✅' if ok else '❌'} {obs}")
-        lines.append(f"| {q} | {ref_display[q]} | " + " | ".join(cells) + " | ⬜ awaits W4 |")
+        lines.append(f"| {q} | {ref_display[q]} | " + " | ".join(cells) + " |")
 
     lines += [
         "",
         "Corpus: BigQuery `wax_baseball_dbt` (reference) · Snowflake `BASEBALL.WAX_BASEBALL` · "
         "Databricks `wax_baseball.parity` (semantic layer: `wax_baseball.semantics` metric views) — "
         "8 marts, ported by the generators in `CODING/wax_baseball_parity` + "
-        "`CODING/wax_baseball_snowflake`.",
+        "`CODING/wax_baseball_snowflake`. D360: two-cloud zero-copy federation "
+        "(BigQuery + Databricks) + `Keeping_Score` SDM, deployed by "
+        "`CODING/wax_baseball_datacloud_deploy` — queried through the semantic-engine "
+        "gateway, org-alias-parameterized for the scratch-org replay.",
         "",
     ]
     RECEIPT_PATH.write_text("\n".join(lines), encoding="utf-8")
