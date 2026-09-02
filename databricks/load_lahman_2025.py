@@ -8,10 +8,12 @@ BigQuery and Snowflake already carry this vintage; Databricks held an older
 cut (e.g. people 24,023 vs canonical 24,270) and this script brings it
 current.
 
-Source: wax-system/wax-baseball/lahman-2025/lahman_1871-2025_csv/ (27 CSVs),
-content-pinned by the sibling MANIFEST.sha256 — verify separately with
-`sha256sum -c` before running this (wax-system is read-only to this script;
-it only reads the CSVs, never writes there).
+Source: the SABR Lahman CSV bundle, which is not kept in any repo (ruled
+2026-09-02 — the engines hold the data and SABR republishes each winter).
+Download from https://sabr.org/lahman-database/, unzip to
+~/Downloads/lahman_1871-2025_csv (or point LAHMAN_DIR at the dir), and verify
+against the release pin wax-system/wax-baseball/lahman-2025/MANIFEST.sha256
+(`sha256sum -c` inside the dir) before running this.
 
 Target: lahman_baseball.baseball_data — the 27 tables already there use
 lowercase CSV-stem names (People.csv -> people, HallOfFame.csv ->
@@ -34,6 +36,7 @@ Requires:
 
 from __future__ import annotations
 
+import os
 import pathlib
 import sys
 
@@ -42,14 +45,21 @@ from databricks import sql as dbsql
 
 # Reuse the same profile/warehouse as the shared helper (scripts/_dbx_conn.py)
 # without editing it — that helper's staging_allowed_local_path is scoped to
-# wax_baseball_parity/data, and this loader needs to PUT from wax-system's
+# wax_baseball_parity/data, and this loader needs to PUT from the downloaded
 # Lahman CSV directory instead.
 HTTP_PATH = "/sql/1.0/warehouses/873a5fb5d84620c1"
 PROFILE = "wax_baseball"
 
+SABR_URL = "https://sabr.org/lahman-database/"
+MANIFEST = r"wax-system\wax-baseball\lahman-2025\MANIFEST.sha256"
 SOURCE_DIR = pathlib.Path(
-    r"C:\Users\georg\wax-system\wax-baseball\lahman-2025\lahman_1871-2025_csv"
+    os.environ.get("LAHMAN_DIR") or pathlib.Path.home() / "Downloads" / "lahman_1871-2025_csv"
 )
+if not SOURCE_DIR.is_dir():
+    sys.exit(
+        f"Lahman CSVs not found at {SOURCE_DIR}. Download the bundle from {SABR_URL}, unzip it there "
+        f"(or set LAHMAN_DIR), and verify with `sha256sum -c` against {MANIFEST} before loading."
+    )
 
 CATALOG = "lahman_baseball"
 SCHEMA = "baseball_data"
