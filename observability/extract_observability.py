@@ -16,9 +16,14 @@ Every cell is marked MEASURED (derived from a captured trace in this folder) or 
 (taken from vendor docs, no trace yet). Golden question: G2 home runs witnessed,
 reference 400 — a surface's cell counts as measured only if 400 is in its trace.
 
-Surfaces handled so far:
-    agentforce    `sf agent preview` session dirs (turn-index.json + traces/<planId>.json)
-                  and `sf agent test run --json` result files (Testing Center)
+Surfaces handled:
+    agentforce         `sf agent preview` session dirs (turn-index.json + traces/<planId>.json)
+                       and `sf agent test run --json` result files (Testing Center)
+    claude_sdk         `agent_queries_metric.py --trace-out` runs
+    bigquery_ca        `capture_bigquery_ca.py` chat() streams
+    databricks_genie   `capture_databricks_genie.py` polled conversations
+    snowflake_cortex   `capture_snowflake_cortex_agent.py` SSE stream + event-table pairs
+    tableau agent      surfaces.json (read-only until case #474498479)
 
 Usage:
     python observability/extract_observability.py
@@ -110,7 +115,9 @@ def parse_agentforce_plan(path: pathlib.Path) -> dict[str, Any]:
         "functions": fn_rows,
         "token_keys": _count_token_keys(d),
         "size_kb": round(path.stat().st_size / 1024),
-        "has_reference": _reference_in(fn_rows) or REFERENCE in (final or ""),
+        # Reference must appear in an action's OUTPUT or the final prose — never in
+        # the full row dicts, where a latency_ms of exactly 400 would false-positive.
+        "has_reference": _reference_in([f["output"] for f in fn_rows]) or REFERENCE in (final or ""),
         "is_g2": "home run" in user.lower(),
     }
 
@@ -185,7 +192,6 @@ def parse_claude_sdk_trace(path: pathlib.Path) -> dict[str, Any]:
     d = json.loads(path.read_text(encoding="utf-8"))
     events = d["events"]
     tool_uses = [e for e in events if e["t"] == "tool_use"]
-    tool_results = {e["at_ms"]: e for e in events if e["t"] == "tool_result"}
     # pair each tool_use with the next tool_result event after it (single-threaded loop, so order holds)
     pairs = []
     idx = [i for i, e in enumerate(events) if e["t"] == "tool_result"]
@@ -209,6 +215,7 @@ def parse_claude_sdk_trace(path: pathlib.Path) -> dict[str, Any]:
         "total_cost_usd": r.get("total_cost_usd"),
         "usage": r.get("usage"),
         "model_usage": r.get("model_usage"),
+        "thinking_tokens": ((r.get("usage") or {}).get("output_tokens_details") or {}).get("thinking_tokens"),
         "pairs": [
             {
                 "name": tu["name"], "input": tu["input"], "at_ms": tu["at_ms"],
@@ -219,7 +226,9 @@ def parse_claude_sdk_trace(path: pathlib.Path) -> dict[str, Any]:
             for tu, nxt in pairs
         ],
         "final": final_text,
-        "has_reference": REFERENCE in json.dumps(r) or REFERENCE in (final_text or ""),
+        # Reference must appear in the final answer text — never in the full
+        # ResultMessage, whose token/cost fields could hit 400 by coincidence.
+        "has_reference": REFERENCE in (r.get("result") or "") or REFERENCE in (final_text or ""),
         "is_g2": "home run" in d["question"].lower(),
     }
 
@@ -245,8 +254,8 @@ def claude_sdk_cell(traces: list[dict[str, Any]]) -> dict[str, Any] | None:
             "plan/reasoning": (
                 f"**tool sequence yes, thought text no.** {g2['num_turns']} turns, {g2['tool_calls']} tool calls: "
                 f"{tool_line}. Every `AssistantMessage` is captured, but none carried extended-thinking text in "
-                f"this run (`output_tokens_details.thinking_tokens` was nonzero — 29 — meaning thinking happened "
-                f"and was billed, but the SDK stream did not surface it as a `ThinkingBlock` here)."
+                f"this run (`output_tokens_details.thinking_tokens` was nonzero — {g2['thinking_tokens']} — meaning "
+                f"thinking happened and was billed, but the SDK stream did not surface it as a `ThinkingBlock` here)."
             ),
             "tool-or-SQL": (
                 f"**tool yes, and the tool's own text names the metric catalog.** `query_metrics` input "
@@ -320,7 +329,10 @@ def parse_bigquery_ca_trace(path: pathlib.Path) -> dict[str, Any]:
         "final": final_text,
         "followups": followups,
         "bq_job": d.get("bq_job"),
-        "has_reference": REFERENCE in json.dumps(d) or REFERENCE in (final_text or ""),
+        # Reference must come from the final prose or the returned data rows — not
+        # the whole trace, where an at_ms timestamp containing 400 would false-positive.
+        "has_reference": REFERENCE in (final_text or "") or REFERENCE in json.dumps(
+            [{k: v for k, v in m.items() if k != "at_ms"} for m in data_msgs]),
         "is_g2": "home run" in d["question"].lower(),
     }
 
@@ -344,7 +356,7 @@ def bigquery_ca_cell(traces: list[dict[str, Any]]) -> dict[str, Any] | None:
         "status": "measured",
         "cells": {
             "plan/reasoning": (
-                f"**yes, in plain sentences — the strongest of the three surfaces.** {len(g2['thoughts'])} "
+                f"**yes, in plain sentences — the plainest narration of any measured surface.** {len(g2['thoughts'])} "
                 f"`THOUGHT`-typed messages, each human-readable, not just structural: {thought_txt}. "
                 f"Agentforce shows a step sequence with no stated reason; the Claude SDK shows tool calls with "
                 f"billed-but-unsurfaced thinking; this API narrates its own plan in text."
@@ -403,7 +415,9 @@ def parse_databricks_genie_trace(path: pathlib.Path) -> dict[str, Any]:
         "thoughts": (query_att or {}).get("thoughts", []),
         "row_count": (query_att or {}).get("row_count"),
         "final": text_att,
-        "has_reference": REFERENCE in json.dumps(d) or REFERENCE in (text_att or ""),
+        # Reference must come from the final message (answer text + attachments) —
+        # not the whole trace, whose at_ms timestamps could contain 400.
+        "has_reference": REFERENCE in (text_att or "") or REFERENCE in json.dumps(fm.get("attachments", [])),
         "is_g2": "home run" in d["question"].lower(),
     }
 
@@ -437,7 +451,7 @@ def databricks_genie_cell(traces: list[dict[str, Any]]) -> dict[str, Any] | None
             "tool-or-SQL": (
                 f"**SQL, and it queries the governed metric view's declared measure directly:** "
                 f"`` {flat_sql[:220]} `` — `MEASURE(home_runs_witnessed)` against the Unity Catalog metric "
-                f"view `mv_plays`, not a hand-rolled aggregate. Closest of the four surfaces to the semantic-"
+                f"view `mv_plays`, not a hand-rolled aggregate. Closest of the measured surfaces to the semantic-"
                 f"layer thesis while still emitting literal SQL text (BigQuery CA writes ad hoc SQL over a raw "
                 f"table; Databricks queries the governed view's own metric)."
             ),
@@ -451,9 +465,9 @@ def databricks_genie_cell(traces: list[dict[str, Any]]) -> dict[str, Any] | None
                 f"SDK and BigQuery CA), tokens absent (undocumented by this API, like BigQuery's own fee).** "
                 f"Full status ladder: {status_line}. Notably **loops back to `ASKING_AI` after "
                 f"`PENDING_WAREHOUSE`** — the model is invoked twice per turn (once to plan the query, once to "
-                f"phrase the answer from results), a two-call shape none of the other three surfaces' traces "
-                f"showed explicitly. Turn wall-clock {g2['wall_clock_ms']} ms — the slowest of the four "
-                f"surfaces measured, largely the warehouse cold-start + double model round-trip."
+                f"phrase the answer from results), a two-call shape no other measured surface's trace "
+                f"showed explicitly. Turn wall-clock {g2['wall_clock_ms']} ms — the slowest surface "
+                f"measured, largely the warehouse cold-start + double model round-trip."
             ),
             "retrieval path": (
                 "**official Python client (`databricks-sdk`), polled — not streamed.** `start_conversation` "
@@ -566,10 +580,11 @@ def snowflake_cortex_cell(traces: list[dict[str, Any]]) -> dict[str, Any] | None
     err = good["errored"][0] if good["errored"] else None
     planning_ms = [a.get("snow.ai.observability.agent.planning.duration") for s in good["spans"]
                    for a in [s["attrs"]] if "planning.duration" in json.dumps(list(a.keys()))]
+    failed_thought = " ".join(failed["thinking"]) if failed and failed.get("thinking") else ""
     thinking_note = (
         f"{len(good['thinking'])} `response.thinking` block(s)" if good["thinking"]
-        else "no `response.thinking` on the successful run (the failed run 1 *did* think aloud: "
-             "\"The semantic model is failing validation. I cannot use it…\")"
+        else "no `response.thinking` on the successful run"
+             + (f" (the failed run 1 *did* think aloud: \"{failed_thought[:120]}…\")" if failed_thought else "")
     )
     return {
         "surface": "Snowflake Cortex Agent",
@@ -587,7 +602,7 @@ def snowflake_cortex_cell(traces: list[dict[str, Any]]) -> dict[str, Any] | None
                 f"**tool AND SQL, and the SQL's first attempt failed in the open.** Tool 1 `query_keeping_score` "
                 f"(Cortex Analyst semantic context) → then `system_execute_sql` twice: "
                 f"`` {_flat(good['sqls'][0]['sql']) if good['sqls'] else '—'} `` → **`status=error`** → "
-                f"re-planned → `` {_flat(sql_ok.get('sql'))} `` → 400. The retry re-derives the metric's own "
+                f"re-planned → `` {_flat(sql_ok.get('sql'))} `` → {REFERENCE}. The retry re-derives the metric's own "
                 f"definition (event_code 23) instead of calling the governed metric by name — the one surface "
                 f"where the agent hand-rolls SQL *over* a semantic layer it could have queried directly."
             ),
@@ -664,6 +679,9 @@ def agentforce_cell(sessions: list[dict[str, Any]], runs: list[dict[str, Any]]) 
                 "**absent from the trace.** Neither the `Keeping_Score` SDM nor Data 360 is named anywhere; "
                 "grounding is provable only from the action's Apex source, not from what the platform shows."
             ),
+            # "transcript `metrics: {}`" below is a hand-read fact from this session's
+            # transcript.jsonl, not extractor-derived — a named limit, kept because the
+            # parser reads plan traces, not transcripts.
             "tokens + latency": (
                 f"**latency yes, tokens no.** Per-step ms (LLM {lat} ms · action {fn['latency_ms'] if fn else '—'} ms · "
                 f"turn {g2['total_ms']} ms); {g2['token_keys']} token/usage fields in {g2['size_kb']} KB of trace; "
