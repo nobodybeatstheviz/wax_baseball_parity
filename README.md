@@ -145,3 +145,25 @@ Analyst rejects the parity tables' quoted-lowercase columns (error 392700) that 
 `SEMANTIC_VIEW()` SQL accepts — the semantic view is built over generated unquoted views
 (`wax_baseball_snowflake/sql/15`) for that reason; `…-run1-validation-failure.json` is
 the receipt.
+
+## Claude Code observability companion — `observability/sweep_claude_transcripts.py`
+
+The Q5 companion, and the *local* half of O2 (which captures one live SDK run on
+demand; this sweeps everything Claude Code has already logged). Passive — no hooks —
+over every `~/.claude/projects/**/*.jsonl` transcript on the machine: one row per tool
+call (timestamp, session, project, server, tool, success), landed in
+`augmented-world-262319.claude_observability.tool_calls`, with a generated reader at
+`wax-system/wax-baseball/claude-code-observability-reader.md`.
+
+```powershell
+cd C:\Users\georg\Documents\CODING\wax_baseball_parity
+py observability\sweep_claude_transcripts.py             # sweep + load + regenerate reader
+py observability\sweep_claude_transcripts.py --dry-run    # counts only, no BigQuery write
+```
+
+Runs automatically at the end of every session as `/sync-check` step 3c — no manual
+invocation needed. Every field read is defensive (Anthropic documents the JSONL format
+as internal and unstable); a future format change shows up as a lower row count, not a
+crash. Honest limit, stated in the reader itself: Claude-side surfaces only —
+Agentforce and Tableau Next calls are covered by their own platform's native
+observability, not this table.
