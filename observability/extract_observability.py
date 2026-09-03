@@ -176,6 +176,114 @@ def parse_agentforce_test_run(path: pathlib.Path) -> dict[str, Any]:
     }
 
 
+# ----------------------------------------------------------------------------- claude sdk · agent_queries_metric.py traces
+
+def parse_claude_sdk_trace(path: pathlib.Path) -> dict[str, Any]:
+    """One `agent_queries_metric.py --trace-out` file = one query() run: an ordered
+    event list (wall-clock-timestamped in the CAPTURING process, since the SDK emits
+    no per-step timing of its own) plus the full ResultMessage dataclass."""
+    d = json.loads(path.read_text(encoding="utf-8"))
+    events = d["events"]
+    tool_uses = [e for e in events if e["t"] == "tool_use"]
+    tool_results = {e["at_ms"]: e for e in events if e["t"] == "tool_result"}
+    # pair each tool_use with the next tool_result event after it (single-threaded loop, so order holds)
+    pairs = []
+    idx = [i for i, e in enumerate(events) if e["t"] == "tool_result"]
+    for tu in tool_uses:
+        pos = events.index(tu)
+        nxt = next((events[i] for i in idx if i > pos), None)
+        pairs.append((tu, nxt))
+    r = d["result"] or {}
+    final_text = next((e["text"] for e in reversed(events) if e["t"] == "assistant_text"), r.get("result", ""))
+    return {
+        "file": path.name,
+        "question": d["question"],
+        "model": d["model"],
+        "mode": d["mode"],
+        "session_id": r.get("session_id"),
+        "tool_calls": d["tool_calls"],
+        "wall_clock_ms": d["wall_clock_ms"],
+        "duration_ms": r.get("duration_ms"),
+        "duration_api_ms": r.get("duration_api_ms"),
+        "num_turns": r.get("num_turns"),
+        "total_cost_usd": r.get("total_cost_usd"),
+        "usage": r.get("usage"),
+        "model_usage": r.get("model_usage"),
+        "pairs": [
+            {
+                "name": tu["name"], "input": tu["input"], "at_ms": tu["at_ms"],
+                "result_at_ms": nxt["at_ms"] if nxt else None,
+                "latency_ms": (nxt["at_ms"] - tu["at_ms"]) if nxt else None,
+                "result": (nxt or {}).get("tool_use_result"),
+            }
+            for tu, nxt in pairs
+        ],
+        "final": final_text,
+        "has_reference": REFERENCE in json.dumps(r) or REFERENCE in (final_text or ""),
+        "is_g2": "home run" in d["question"].lower(),
+    }
+
+
+def claude_sdk_cell(traces: list[dict[str, Any]]) -> dict[str, Any] | None:
+    g2 = next((t for t in traces if t["is_g2"] and t["has_reference"]), None)
+    if g2 is None:
+        return None
+    metric_pair = next((p for p in g2["pairs"] if p["name"].endswith("query_metrics")), None)
+    list_pair = next((p for p in g2["pairs"] if p["name"].endswith("list_metrics")), None)
+    grounding = (metric_pair or {}).get("result")
+    grounding_txt = json.dumps(grounding)[:200] if grounding else "—"
+    mu = g2["model_usage"] or {}
+    tool_line = " → ".join(f"`{p['name'].split('__')[-1]}`" for p in g2["pairs"])
+    overhead = None
+    if list_pair and list_pair.get("latency_ms"):
+        overhead = list_pair["latency_ms"]
+    return {
+        "surface": "Claude SDK",
+        "agent": "query-agent (W6b, MetricFlow by name) — `agent_queries_metric.py`",
+        "status": "measured",
+        "cells": {
+            "plan/reasoning": (
+                f"**tool sequence yes, thought text no.** {g2['num_turns']} turns, {g2['tool_calls']} tool calls: "
+                f"{tool_line}. Every `AssistantMessage` is captured, but none carried extended-thinking text in "
+                f"this run (`output_tokens_details.thinking_tokens` was nonzero — 29 — meaning thinking happened "
+                f"and was billed, but the SDK stream did not surface it as a `ThinkingBlock` here)."
+            ),
+            "tool-or-SQL": (
+                f"**tool yes, and the tool's own text names the metric catalog.** `query_metrics` input "
+                f"`{json.dumps(metric_pair['input']) if metric_pair else '—'}` → result `{grounding_txt}`. "
+                f"No SQL — by design (the semantic-layer thesis: MetricFlow is the only path, metric names are "
+                f"the contract)."
+            ),
+            "grounding source": (
+                "**present, in the tool's own output text.** `list_metrics` returns the literal governed catalog "
+                "(`home_runs_witnessed`, `attended_win_rate`, …) and `query_metrics`'s result is a CSV headed by "
+                "the metric name — the grounding is legible in the trace text itself, not just inferable from code."
+            ),
+            "tokens + latency": (
+                f"**both, fully.** `total_cost_usd` ${g2['total_cost_usd']:.4f}, per-model breakdown in "
+                f"`model_usage` (cost/input/output/cache tokens, context window, provider) — far more granular "
+                f"than Agentforce's zero fields. Latency: `duration_api_ms` {g2['duration_api_ms']} ms vs total "
+                f"`duration_ms` {g2['duration_ms']} ms — **{g2['duration_ms'] - g2['duration_api_ms']} ms of the "
+                f"turn was NOT model time**; per-tool breakdown shows why: `list_metrics` (a subprocess to "
+                f"`mf.exe`) alone took {overhead} ms, dwarfing the ~{g2['duration_api_ms']} ms of actual API calls. "
+                f"The bottleneck is the local semantic-layer CLI, not the model."
+            ),
+            "retrieval path": (
+                "**in-process capture, no CLI trace-read needed.** `agent_queries_metric.py --trace-out` writes "
+                "the full event list + `ResultMessage` (via `dataclasses.asdict`) directly from the SDK's own "
+                "message stream — nothing gitignored, nothing to lose. **OTel measured 2026-09-03 and found "
+                "broken on this CLI (2.1.257) + individual-plan auth:** `CLAUDE_CODE_ENABLE_TELEMETRY=1` + "
+                "`OTEL_METRICS_EXPORTER=console` / `OTEL_LOGS_EXPORTER=console` set per docs; `--debug-file` shows "
+                "`isTelemetryEnabled=true` but `getOtlpReaders: types=[]` / `getOtlpLogExporters: types=[]` / "
+                "`Created 0 log exporter(s)` — zero exporters built despite the documented value, so metrics/logs "
+                "are generated internally (`Event dropped (no event logger initialized): hook_registered`) and "
+                "never emitted. The plan's docs-row claim was **read, not measured — and doesn't hold up**."
+            ),
+        },
+        "evidence": {"g2": g2, "traces": traces},
+    }
+
+
 # ----------------------------------------------------------------------------- rubric derivation
 
 def agentforce_cell(sessions: list[dict[str, Any]], runs: list[dict[str, Any]]) -> dict[str, Any] | None:
@@ -299,7 +407,7 @@ def observability_findings(sessions: list[dict[str, Any]]) -> list[dict[str, Any
 # ----------------------------------------------------------------------------- presentation
 
 def render(cell_rows: list[dict[str, Any]], af: dict[str, Any] | None,
-           findings: list[dict[str, Any]]) -> str:
+           sdk: dict[str, Any] | None, findings: list[dict[str, Any]]) -> str:
     stamp = datetime.date.today().isoformat()
     lines = [
         "# Observability receipts — Keeping Score",
@@ -384,6 +492,36 @@ def render(cell_rows: list[dict[str, Any]], af: dict[str, Any] | None,
                 )
             lines.append("")
 
+    if sdk:
+        g2 = sdk["evidence"]["g2"]
+        lines += [
+            "## Claude SDK — the query-agent cell, from the trace",
+            "",
+            f"Run `{g2['file']}` (session `{g2['session_id']}`, model `{g2['model']}`) — "
+            f"`observability/traces/claude_sdk/{g2['file']}`.",
+            "",
+            "| Step shape | Value |",
+            "|---|---|",
+            f"| User | {g2['question']} |",
+            f"| Turns | {g2['num_turns']} |",
+            f"| Tool calls | " + " → ".join(f"`{p['name']}` {json.dumps(p['input'])}" for p in g2["pairs"]) + " |",
+            f"| Cost | ${g2['total_cost_usd']:.4f} |",
+            f"| duration_api_ms (model) | {g2['duration_api_ms']} |",
+            f"| duration_ms (total, SDK-reported) | {g2['duration_ms']} |",
+            f"| wall_clock_ms (this capture, includes CLI spawn) | {g2['wall_clock_ms']} |",
+            f"| Final | {g2['final']} |",
+            f"| Reference {REFERENCE} in trace | {'✅' if g2['has_reference'] else '❌'} |",
+            "",
+            "Per-tool latency, from the wall-clock event timestamps:",
+            "",
+            "| Tool | Input | Latency (ms) | Result (truncated) |",
+            "|---|---|---|---|",
+        ]
+        for p in g2["pairs"]:
+            res = json.dumps(p["result"])[:160].replace("|", "\\|") if p["result"] else "—"
+            lines.append(f"| `{p['name']}` | {json.dumps(p['input'])} | {p['latency_ms']} | {res} |")
+        lines.append("")
+
     if findings:
         lines += [
             "## Observability findings — what the trace caught that the prose hid",
@@ -420,14 +558,20 @@ def main() -> None:
     runs = [parse_agentforce_test_run(p) for p in sorted(af_dir.glob("*testing-center*.json"))] if af_dir.exists() else []
     af = agentforce_cell(sessions, runs)
 
+    sdk_dir = TRACES / "claude_sdk"
+    sdk_traces = [parse_claude_sdk_trace(p) for p in sorted(sdk_dir.glob("*.json"))] if sdk_dir.exists() else []
+    sdk = claude_sdk_cell(sdk_traces)
+
     rows: list[dict[str, Any]] = []
     if af:
         rows.append(af)
+    if sdk:
+        rows.append(sdk)
     measured_names = {r["surface"].lower() for r in rows}
     rows += [r for r in read_cells() if r["surface"].lower() not in measured_names]
 
     findings = observability_findings(sessions)
-    RECEIPT_PATH.write_text(render(rows, af, findings), encoding="utf-8")
+    RECEIPT_PATH.write_text(render(rows, af, sdk, findings), encoding="utf-8")
     print(f"wrote {RECEIPT_PATH}  ({sum(1 for r in rows if r['status']=='measured')}/{len(rows)} measured, "
           f"{len(findings)} finding(s))")
     for fnd in findings:

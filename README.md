@@ -54,4 +54,29 @@ python observability\extract_observability.py
 Capture a new Agentforce preview session: run `sf agent preview` in the
 `wax-baseball-agentforce` project, then copy the session folder into
 `observability/traces/agentforce/<date>-preview-session-<id8>/`. A Testing Center
-run: `sf agent test run --api-name Baseball_Scout_Keeping_Score -o devorg --wait 10 --json > observability\traces\agentforce\<date>-testing-center.json`.
+run: `sf agent test run --api-name Baseball_Scout_Keeping_Score -o devorg --wait 10 --json > observability\traces\agentforce\<date>-testing-center.json`
+(**measured 2026-09-03: this async job can wedge at `IN_PROGRESS` indefinitely with
+no error and no timeout** — if it's been stuck more than a couple minutes, kill it
+and use the `sf agent preview start`/`send`/`end` trio instead, same capture route
+as the reference cell).
+
+Capture a new Claude SDK query-agent run: `wax_baseball_dbt/agents/agent_queries_metric.py`
+carries an additive `--trace-out <path>` flag (default behavior unchanged) that writes
+every tool call/result plus the full `ResultMessage` (via `dataclasses.asdict`),
+wall-clock-timestamped in the capturing process since the SDK emits no per-step
+timing of its own:
+
+```powershell
+cd C:\Users\georg\Documents\CODING\wax_baseball_dbt
+python agents\agent_queries_metric.py --question "How many home runs have I witnessed live at games I attended?" `
+  --model sonnet --trace-out ..\wax_baseball_parity\observability\traces\claude_sdk\<date>-g2-semantic-layer.json
+```
+
+OTel export (`CLAUDE_CODE_ENABLE_TELEMETRY=1` + `OTEL_METRICS_EXPORTER=console` /
+`OTEL_LOGS_EXPORTER=console`) was measured 2026-09-03 and found **broken** on CLI
+2.1.257 under individual-plan auth: `claude --debug-file <path>` shows
+`isTelemetryEnabled=true` but `getOtlpReaders`/`getOtlpLogExporters` report
+`types=[]` and `Created 0 log exporter(s)` — no metric or log line is ever emitted,
+on stdout, stderr, or the debug file. The in-process `--trace-out` capture is the
+reliable route; don't spend more time on the OTel path without a re-check against a
+newer CLI version first.

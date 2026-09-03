@@ -1,0 +1,230 @@
+{
+  "captured_at": "2026-09-03T15:06:20.769316+00:00",
+  "mode": "SEMANTIC LAYER (governed metrics)",
+  "model": "sonnet",
+  "question": "How many home runs have I witnessed live at games I attended?",
+  "tool_calls": 3,
+  "wall_clock_ms": 44988,
+  "events": [
+    {
+      "t": "assistant_turn",
+      "at_ms": 8771,
+      "model": "claude-sonnet-5",
+      "usage": {
+        "input_tokens": 2,
+        "cache_creation_input_tokens": 36826,
+        "cache_read_input_tokens": 0,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 36826
+        },
+        "output_tokens": 2,
+        "service_tier": "standard",
+        "inference_geo": "not_available"
+      },
+      "stop_reason": null
+    },
+    {
+      "t": "assistant_turn",
+      "at_ms": 8772,
+      "model": "claude-sonnet-5",
+      "usage": {
+        "input_tokens": 2,
+        "cache_creation_input_tokens": 36826,
+        "cache_read_input_tokens": 0,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 36826
+        },
+        "output_tokens": 2,
+        "service_tier": "standard",
+        "inference_geo": "not_available"
+      },
+      "stop_reason": null
+    },
+    {
+      "t": "tool_use",
+      "at_ms": 8772,
+      "tool_use_id": "toolu_013wdTMqbtGaKYZ6M8DN17yV",
+      "name": "ToolSearch",
+      "input": {
+        "query": "select:mcp__keeping_score__list_metrics,mcp__keeping_score__query_metrics"
+      }
+    },
+    {
+      "t": "tool_result",
+      "at_ms": 8783,
+      "tool_use_result": {
+        "matches": [
+          "mcp__keeping_score__list_metrics",
+          "mcp__keeping_score__query_metrics"
+        ],
+        "query": "select:mcp__keeping_score__list_metrics,mcp__keeping_score__query_metrics",
+        "total_deferred_tools": 96
+      }
+    },
+    {
+      "t": "assistant_turn",
+      "at_ms": 9759,
+      "model": "claude-sonnet-5",
+      "usage": {
+        "input_tokens": 2,
+        "cache_creation_input_tokens": 952,
+        "cache_read_input_tokens": 36826,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 952
+        },
+        "output_tokens": 32,
+        "service_tier": "standard",
+        "inference_geo": "not_available"
+      },
+      "stop_reason": null
+    },
+    {
+      "t": "tool_use",
+      "at_ms": 9759,
+      "tool_use_id": "toolu_017UHeo7WGVhm2ggwQvMRiqB",
+      "name": "mcp__keeping_score__list_metrics",
+      "input": {}
+    },
+    {
+      "t": "tool_result",
+      "at_ms": 31507,
+      "tool_use_result": [
+        {
+          "type": "text",
+          "text": "- \ud83d\udd0d Looking for all available metrics...\n\n\\ \ud83d\udd0d Looking for all available metrics...\nv \ud83c\udf31 We've found 9 metrics.\nThe list below shows metrics in the format of \"metric_name: list of available dimensions\"\n\u2022 attended_win_rate: attended_team_game__game_date, attended_team_game__is_home, attended_team_game__opponent, attended_team_game__team, metric_time\n\u2022 games_attended: attended_game__game_date, attended_game__game_type, attended_game__is_yankees_game, attended_game__venue, metric_time\n\u2022 games_per_attendee: game_attendee__attendee_name, game_attendee__attendee_type, game_attendee__game_date, metric_time\n\u2022 hall_of_famers_seen: hof_player__first_seen_date, hof_player__induction_year, hof_player__player_name, metric_time\n\u2022 home_runs_witnessed: metric_time, play__batting_team_is_home, play__event_code, play__game_date\n\u2022 runs_witnessed: metric_time, play__batting_team_is_home, play__event_code, play__game_date\n\u2022 team_games_decided: attended_team_game__game_date, attended_team_game__is_home, attended_team_game__opponent, attended_team_game__team, metric_time\n\u2022 team_wins_attended: attended_team_game__game_date, attended_team_game__is_home, attended_team_game__opponent, attended_team_game__team, metric_time\n\u2022 unique_stadiums: attended_game__game_date, attended_game__game_type, attended_game__is_yankees_game, attended_game__venue, metric_time"
+        }
+      ]
+    },
+    {
+      "t": "assistant_turn",
+      "at_ms": 32624,
+      "model": "claude-sonnet-5",
+      "usage": {
+        "input_tokens": 2,
+        "cache_creation_input_tokens": 603,
+        "cache_read_input_tokens": 37778,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 603
+        },
+        "output_tokens": 33,
+        "service_tier": "standard",
+        "inference_geo": "not_available"
+      },
+      "stop_reason": null
+    },
+    {
+      "t": "tool_use",
+      "at_ms": 32624,
+      "tool_use_id": "toolu_01XWmgNLp9P7BAexeg6vxDfT",
+      "name": "mcp__keeping_score__query_metrics",
+      "input": {
+        "metrics": "home_runs_witnessed"
+      }
+    },
+    {
+      "t": "tool_result",
+      "at_ms": 42982,
+      "tool_use_result": [
+        {
+          "type": "text",
+          "text": "CSV result:\nhome_runs_witnessed\n\n400"
+        }
+      ]
+    },
+    {
+      "t": "assistant_turn",
+      "at_ms": 44107,
+      "model": "claude-sonnet-5",
+      "usage": {
+        "input_tokens": 2,
+        "cache_creation_input_tokens": 349,
+        "cache_read_input_tokens": 38381,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 349
+        },
+        "output_tokens": 1,
+        "service_tier": "standard",
+        "inference_geo": "not_available"
+      },
+      "stop_reason": null
+    },
+    {
+      "t": "assistant_text",
+      "at_ms": 44107,
+      "text": "**400 home runs** witnessed live across your 178 attended MLB games (1984\u20132025)."
+    }
+  ],
+  "result": {
+    "subtype": "success",
+    "duration_ms": 38730,
+    "duration_api_ms": 5695,
+    "is_error": false,
+    "num_turns": 4,
+    "session_id": "ffaa48ce-c231-46ed-9cc5-16183ab81dae",
+    "stop_reason": "end_turn",
+    "total_cost_usd": 0.18005299999999996,
+    "usage": {
+      "input_tokens": 8,
+      "cache_creation_input_tokens": 38730,
+      "cache_read_input_tokens": 112985,
+      "output_tokens": 252,
+      "output_tokens_details": {
+        "thinking_tokens": 29
+      },
+      "server_tool_use": {
+        "web_search_requests": 0,
+        "web_fetch_requests": 0
+      },
+      "service_tier": "standard",
+      "cache_creation": {
+        "ephemeral_1h_input_tokens": 38730,
+        "ephemeral_5m_input_tokens": 0
+      },
+      "inference_geo": "not_available",
+      "iterations": [
+        {
+          "input_tokens": 2,
+          "output_tokens": 32,
+          "cache_read_input_tokens": 38381,
+          "cache_creation_input_tokens": 349,
+          "cache_creation": {
+            "ephemeral_5m_input_tokens": 0,
+            "ephemeral_1h_input_tokens": 349
+          },
+          "type": "message"
+        }
+      ],
+      "speed": "standard"
+    },
+    "result": "**400 home runs** witnessed live across your 178 attended MLB games (1984\u20132025).",
+    "structured_output": null,
+    "model_usage": {
+      "claude-sonnet-5": {
+        "inputTokens": 8,
+        "outputTokens": 252,
+        "cacheReadInputTokens": 112985,
+        "cacheCreationInputTokens": 38730,
+        "webSearchRequests": 0,
+        "costUSD": 0.18005299999999996,
+        "contextWindow": 1000000,
+        "maxOutputTokens": 64000,
+        "canonicalModel": "claude-sonnet-5",
+        "provider": "firstParty",
+        "costBasis": "list"
+      }
+    },
+    "permission_denials": [],
+    "deferred_tool_use": null,
+    "errors": null,
+    "api_error_status": null,
+    "uuid": "ae3995bf-5467-4a77-ba42-6df9713a1884",
+    "terminal_reason": "completed",
+    "origin": null
+  },
+  "error": null
+}
