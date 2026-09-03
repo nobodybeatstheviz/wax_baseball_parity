@@ -1,0 +1,78 @@
+{
+  "version": "1.0",
+  "sessionId": "18ac6fd1-6b6e-4036-af45-f4e1be249556",
+  "agentId": "Baseball_Scout",
+  "created": "2026-09-02T00:26:26.372Z",
+  "turns": [
+    {
+      "turn": 1,
+      "timestamp": "2026-09-02T00:26:26.372Z",
+      "role": "agent",
+      "summary": "Hi - I'm your Baseball Scout. Ask me about the games you've been to (which teams, when, where, how m...",
+      "summaryTruncated": true,
+      "multiModal": null,
+      "traceFile": null,
+      "planId": null
+    },
+    {
+      "turn": 2,
+      "timestamp": "2026-09-02T00:26:39.870Z",
+      "role": "user",
+      "summary": "How many home runs have I witnessed in person?",
+      "summaryTruncated": false,
+      "multiModal": null,
+      "traceFile": null,
+      "planId": null
+    },
+    {
+      "turn": 3,
+      "timestamp": "2026-09-02T00:26:45.425Z",
+      "role": "agent",
+      "summary": "You have witnessed 400 home runs in person at the games you have attended. Would you like to know ab...",
+      "summaryTruncated": true,
+      "multiModal": null,
+      "traceFile": "traces/172e2b4d-acdc-43cb-8d56-e177ee62997d.json",
+      "planId": "172e2b4d-acdc-43cb-8d56-e177ee62997d"
+    },
+    {
+      "turn": 4,
+      "timestamp": "2026-09-02T00:27:41.666Z",
+      "role": "user",
+      "summary": "How many Hall of Famers have I seen play?",
+      "summaryTruncated": false,
+      "multiModal": null,
+      "traceFile": null,
+      "planId": null
+    },
+    {
+      "turn": 5,
+      "timestamp": "2026-09-02T00:27:46.811Z",
+      "role": "agent",
+      "summary": "You have seen 44 Hall of Famers play in person. Would you like to know about other metrics, such as ...",
+      "summaryTruncated": true,
+      "multiModal": null,
+      "traceFile": "traces/98940e0f-7e5a-443c-aa9b-a486d3e5c320.json",
+      "planId": "98940e0f-7e5a-443c-aa9b-a486d3e5c320"
+    },
+    {
+      "turn": 6,
+      "timestamp": "2026-09-02T00:27:52.110Z",
+      "role": "user",
+      "summary": "What is my win rate when I go see the Yankees?",
+      "summaryTruncated": false,
+      "multiModal": null,
+      "traceFile": null,
+      "planId": null
+    },
+    {
+      "turn": 7,
+      "timestamp": "2026-09-02T00:27:59.938Z",
+      "role": "agent",
+      "summary": "You have attended 143 Yankees games, and the Yankees have won 90 of those. This gives you a win rate...",
+      "summaryTruncated": true,
+      "multiModal": null,
+      "traceFile": "traces/c7f241a8-28ab-47be-8dab-f0494e613976.json",
+      "planId": "c7f241a8-28ab-47be-8dab-f0494e613976"
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "sessionId": "18ac6fd1-6b6e-4036-af45-f4e1be249556",
+  "agentId": "Baseball_Scout",
+  "startTime": "2026-09-02T00:26:26.372Z",
+  "planIds": [
+    "172e2b4d-acdc-43cb-8d56-e177ee62997d",
+    "98940e0f-7e5a-443c-aa9b-a486d3e5c320",
+    "c7f241a8-28ab-47be-8dab-f0494e613976"
+  ],
+  "mockMode": "Live Test"
+}

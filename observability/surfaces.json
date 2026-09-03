@@ -1,0 +1,62 @@
+[
+  {
+    "surface": "Claude SDK",
+    "agent": "query-agent (W6b, MetricFlow by name)",
+    "status": "read",
+    "cells": {
+      "plan/reasoning": "every turn + tool call in the JSONL transcript / SDK message stream (format documented as internal + unstable)",
+      "tool-or-SQL": "tool calls with inputs; MetricFlow query text via the tool result",
+      "grounding source": "the metric name + MetricFlow output in the tool result",
+      "tokens + latency": "`ResultMessage` usage + cost; OTel export (`CLAUDE_CODE_ENABLE_TELEMETRY`)",
+      "retrieval path": "local JSONL · SDK `ResultMessage` · OTel. Tranche-1 4-vs-9 receipt predates the rubric; O2 re-measures"
+    }
+  },
+  {
+    "surface": "BigQuery Conversational Analytics",
+    "agent": "console data agent",
+    "status": "read",
+    "cells": {
+      "plan/reasoning": "`THOUGHT` steps in the streamed response",
+      "tool-or-SQL": "`generatedSql`",
+      "grounding source": "`schema` used",
+      "tokens + latency": "not documented",
+      "retrieval path": "streaming REST `:chat` or the `google-cloud-geminidataanalytics` Python client; cost unmeasured — one call first"
+    }
+  },
+  {
+    "surface": "Databricks Genie",
+    "agent": "Genie space (O4 stands it up)",
+    "status": "read",
+    "cells": {
+      "plan/reasoning": "`thoughts[]` (preview)",
+      "tool-or-SQL": "generated SQL",
+      "grounding source": "the space's tables / metric views",
+      "tokens + latency": "status ladder timing; tokens not documented",
+      "retrieval path": "Conversation REST API; MLflow only by wrapping, not native"
+    }
+  },
+  {
+    "surface": "Snowflake Cortex Agent",
+    "agent": "Cortex Agent (O5 stands it up)",
+    "status": "read",
+    "cells": {
+      "plan/reasoning": "thinking events in the stream",
+      "tool-or-SQL": "tool_use + SQL",
+      "grounding source": "the semantic view named in the tool_use",
+      "tokens + latency": "tokens in the stream; `AI_OBSERVABILITY_EVENTS` event table",
+      "retrieval path": "streaming REST + a SQL-queryable event table with no setup"
+    }
+  },
+  {
+    "surface": "Tableau Agent",
+    "agent": "Tableau Agent over the W5 sources",
+    "status": "read",
+    "cells": {
+      "plan/reasoning": "in-panel reasoning explanation",
+      "tool-or-SQL": "not exposed",
+      "grounding source": "source-data details in the panel",
+      "tokens + latency": "not exposed",
+      "retrieval path": "GUI only — no API found; blocked on case #474498479"
+    }
+  }
+]

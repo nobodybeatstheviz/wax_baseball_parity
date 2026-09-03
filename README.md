@@ -28,3 +28,30 @@ cd ..\wax_baseball_snowflake
 Add a new mart (e.g. `fct_attended_team_games`) by adding one entry to the
 `TABLES` list at the top of both `scripts/export_bigquery.py` and
 `scripts/load_databricks.py`.
+
+## Observability (phase 2, O7) — `observability/`
+
+The same golden question (G2, home runs witnessed, reference 400) through each
+surface's native agent, with what each platform lets you see of how the answer
+was reached. Three layers, same shape as the harness:
+
+- **Source** — `observability/traces/<surface>/…`: captured traces, git-tracked,
+  never edited. Agentforce traces are copied out of the DX project's gitignored
+  `.sfdx/agents/<agent>/sessions/<id>/` (an `sf agent preview` session) or saved
+  from `sf agent test run --json` (Testing Center). `surfaces.json` is the
+  hand-kept seed for cells that have no trace yet (what the docs say); a row
+  leaves it the moment a trace lands for that surface.
+- **Analysis** — `observability/extract_observability.py` reads the five rubric
+  columns (plan/reasoning · tool-or-SQL · grounding source · tokens+latency ·
+  retrieval path) out of the traces. No hand edits.
+- **Presentation** — regenerates `wax-system/wax-baseball/observability-receipts.md`,
+  every cell marked measured or read.
+
+```powershell
+python observability\extract_observability.py
+```
+
+Capture a new Agentforce preview session: run `sf agent preview` in the
+`wax-baseball-agentforce` project, then copy the session folder into
+`observability/traces/agentforce/<date>-preview-session-<id8>/`. A Testing Center
+run: `sf agent test run --api-name Baseball_Scout_Keeping_Score -o devorg --wait 10 --json > observability\traces\agentforce\<date>-testing-center.json`.
