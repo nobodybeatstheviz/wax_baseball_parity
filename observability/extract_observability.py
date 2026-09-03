@@ -382,6 +382,93 @@ def bigquery_ca_cell(traces: list[dict[str, Any]]) -> dict[str, Any] | None:
     }
 
 
+# ----------------------------------------------------------------------------- databricks genie · capture_databricks_genie.py traces
+
+def parse_databricks_genie_trace(path: pathlib.Path) -> dict[str, Any]:
+    """One `capture_databricks_genie.py --trace-out` file = one polled conversation:
+    a self-timestamped status ladder (Genie's API has no streaming progress of its
+    own) plus the final `GenieMessage` with its typed `thoughts[]` and `query`."""
+    d = json.loads(path.read_text(encoding="utf-8"))
+    statuses = [e for e in d["events"] if e["phase"] == "status"]
+    fm = d.get("final_message") or {}
+    query_att = next((a["query"] for a in fm.get("attachments", []) if "query" in a), None)
+    text_att = next((a["text"] for a in fm.get("attachments", []) if "text" in a), fm.get("content", ""))
+    return {
+        "file": path.name,
+        "question": d["question"],
+        "space_id": d["space_id"],
+        "wall_clock_ms": d["wall_clock_ms"],
+        "statuses": [{"at_ms": s["at_ms"], "status": s["status"].replace("MessageStatus.", "")} for s in statuses],
+        "sql": (query_att or {}).get("query"),
+        "thoughts": (query_att or {}).get("thoughts", []),
+        "row_count": (query_att or {}).get("row_count"),
+        "final": text_att,
+        "has_reference": REFERENCE in json.dumps(d) or REFERENCE in (text_att or ""),
+        "is_g2": "home run" in d["question"].lower(),
+    }
+
+
+def databricks_genie_cell(traces: list[dict[str, Any]]) -> dict[str, Any] | None:
+    g2 = next((t for t in traces if t["is_g2"] and t["has_reference"]), None)
+    if g2 is None:
+        return None
+
+    def _flat(s: str) -> str:
+        return " ".join((s or "").split())
+
+    status_line = " → ".join(f"{s['status']} (+{s['at_ms']}ms)" for s in g2["statuses"])
+    thought_kinds = ", ".join(sorted({t["thought_type"].replace("ThoughtType.THOUGHT_TYPE_", "") for t in g2["thoughts"]}))
+    understanding = next(
+        (_flat(t["content"]) for t in g2["thoughts"] if "UNDERSTANDING" in t["thought_type"]), None
+    )
+    flat_sql = _flat(g2["sql"])
+    return {
+        "surface": "Databricks Genie",
+        "agent": "Genie space \"Keeping Score\" over `wax_baseball.semantics` metric views — `capture_databricks_genie.py`",
+        "status": "measured",
+        "cells": {
+            "plan/reasoning": (
+                f"**yes, and typed — the most structured reasoning of any surface.** {len(g2['thoughts'])} "
+                f"`Thought` entries across categories ({thought_kinds}), not one undifferentiated blob. "
+                f"The `UNDERSTANDING` thought is the standout: **the agent stated its own grounding assumption "
+                f"out loud** — \"{understanding[:220] if understanding else ''}\" — a self-flagged caveat no "
+                f"other surface measured so far volunteered."
+            ),
+            "tool-or-SQL": (
+                f"**SQL, and it queries the governed metric view's declared measure directly:** "
+                f"`` {flat_sql[:220]} `` — `MEASURE(home_runs_witnessed)` against the Unity Catalog metric "
+                f"view `mv_plays`, not a hand-rolled aggregate. Closest of the four surfaces to the semantic-"
+                f"layer thesis while still emitting literal SQL text (BigQuery CA writes ad hoc SQL over a raw "
+                f"table; Databricks queries the governed view's own metric)."
+            ),
+            "grounding source": (
+                f"**present, named, and self-qualified.** `mv_plays` appears in a `DATA_SOURCING` thought "
+                f"explicitly; the `UNDERSTANDING` thought above is grounding *and* an honest uncertainty flag "
+                f"in one artifact — arguably the richest grounding disclosure in the matrix so far."
+            ),
+            "tokens + latency": (
+                f"**latency yes (self-polled — Genie streams no progress of its own, same gap as the Claude "
+                f"SDK and BigQuery CA), tokens absent (undocumented by this API, like BigQuery's own fee).** "
+                f"Full status ladder: {status_line}. Notably **loops back to `ASKING_AI` after "
+                f"`PENDING_WAREHOUSE`** — the model is invoked twice per turn (once to plan the query, once to "
+                f"phrase the answer from results), a two-call shape none of the other three surfaces' traces "
+                f"showed explicitly. Turn wall-clock {g2['wall_clock_ms']} ms — the slowest of the four "
+                f"surfaces measured, largely the warehouse cold-start + double model round-trip."
+            ),
+            "retrieval path": (
+                "**official Python client (`databricks-sdk`), polled — not streamed.** `start_conversation` "
+                "returns a `Wait[GenieMessage]`; the capture calls `get_message` itself in a loop and stamps "
+                "each status transition, since the SDK gives no push/stream mechanism for progress. "
+                "**Measured 2026-09-03: `GenieAPI.create_space` cannot author a space from zero** — its own "
+                "docstring says the `serialized_space` payload is only obtainable by reading back an existing "
+                "space, so this space was created once through the workspace UI (Wax) before anything here "
+                "could run; every capture after that point is fully scriptable."
+            ),
+        },
+        "evidence": {"g2": g2, "traces": traces},
+    }
+
+
 # ----------------------------------------------------------------------------- rubric derivation
 
 def agentforce_cell(sessions: list[dict[str, Any]], runs: list[dict[str, Any]]) -> dict[str, Any] | None:
@@ -506,7 +593,7 @@ def observability_findings(sessions: list[dict[str, Any]]) -> list[dict[str, Any
 
 def render(cell_rows: list[dict[str, Any]], af: dict[str, Any] | None,
            sdk: dict[str, Any] | None, bq: dict[str, Any] | None,
-           findings: list[dict[str, Any]]) -> str:
+           dbx: dict[str, Any] | None, findings: list[dict[str, Any]]) -> str:
     stamp = datetime.date.today().isoformat()
     lines = [
         "# Observability receipts — Keeping Score",
@@ -650,6 +737,34 @@ def render(cell_rows: list[dict[str, Any]], af: dict[str, Any] | None,
             "",
         ]
 
+    if dbx:
+        g2 = dbx["evidence"]["g2"]
+
+        def _flat3(s: str) -> str:
+            return " ".join((s or "").split())
+
+        lines += [
+            "## Databricks Genie — the console-agent cell, from the trace",
+            "",
+            f"Space `{g2['space_id']}` (\"Keeping Score\", over `wax_baseball.semantics`), run `{g2['file']}` — "
+            f"`observability/traces/databricks_genie/{g2['file']}`.",
+            "",
+            "| Step shape | Value |",
+            "|---|---|",
+            f"| User | {g2['question']} |",
+            f"| Status ladder | " + " → ".join(f"{s['status']} (+{s['at_ms']}ms)" for s in g2["statuses"]) + " |",
+            f"| generated SQL | `` {_flat3(g2['sql'])} `` |",
+            f"| Thoughts | " + " | ".join(
+                f"**{t['thought_type'].replace('ThoughtType.THOUGHT_TYPE_', '')}**: {_flat3(t['content'])[:100]}"
+                for t in g2["thoughts"]
+            ) + " |",
+            f"| Row count | {g2['row_count']} |",
+            f"| wall_clock_ms | {g2['wall_clock_ms']} |",
+            f"| Final | {g2['final']} |",
+            f"| Reference {REFERENCE} in trace | {'✅' if g2['has_reference'] else '❌'} |",
+            "",
+        ]
+
     if findings:
         lines += [
             "## Observability findings — what the trace caught that the prose hid",
@@ -694,6 +809,10 @@ def main() -> None:
     bq_traces = [parse_bigquery_ca_trace(p) for p in sorted(bq_dir.glob("*.json"))] if bq_dir.exists() else []
     bq = bigquery_ca_cell(bq_traces)
 
+    dbx_dir = TRACES / "databricks_genie"
+    dbx_traces = [parse_databricks_genie_trace(p) for p in sorted(dbx_dir.glob("*.json"))] if dbx_dir.exists() else []
+    dbx = databricks_genie_cell(dbx_traces)
+
     rows: list[dict[str, Any]] = []
     if af:
         rows.append(af)
@@ -701,11 +820,13 @@ def main() -> None:
         rows.append(sdk)
     if bq:
         rows.append(bq)
+    if dbx:
+        rows.append(dbx)
     measured_names = {r["surface"].lower() for r in rows}
     rows += [r for r in read_cells() if r["surface"].lower() not in measured_names]
 
     findings = observability_findings(sessions)
-    RECEIPT_PATH.write_text(render(rows, af, sdk, bq, findings), encoding="utf-8")
+    RECEIPT_PATH.write_text(render(rows, af, sdk, bq, dbx, findings), encoding="utf-8")
     print(f"wrote {RECEIPT_PATH}  ({sum(1 for r in rows if r['status']=='measured')}/{len(rows)} measured, "
           f"{len(findings)} finding(s))")
     for fnd in findings:

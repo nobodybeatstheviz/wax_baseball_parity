@@ -100,3 +100,27 @@ reference docs alone aren't enough to hand-build a request correctly. And **the
 Conversational Analytics API's own per-call/token pricing is undocumented** — Google's
 pricing page returns no billing figures on fetch; only the BigQuery warehouse scan
 underneath a call is priced here (via the job lookup), not the API's own service fee.
+
+Capture a new Databricks Genie run: `observability/capture_databricks_genie.py` (needs
+`databricks-sdk`, already installed for the `_dbx_conn.py`/metric-view scripts, and the
+`wax_baseball` profile in `~/.databrickscfg`). **The Genie space itself must exist
+before this can run — and it cannot be created via API.** `GenieAPI.create_space`'s own
+docstring says its `serialized_space` payload is only obtainable by reading back an
+*existing* space (`get_space`); there's no documented way to author one from zero. One
+space — "Keeping Score", bound to `wax_baseball.semantics`'s five metric views — was
+created once through the workspace UI (Wax, 2026-09-03), `space_id
+01f1a7accb3713fca8a7ee2e13c8d652`. Everything past that point is fully scriptable, same
+as the other three surfaces:
+
+```powershell
+cd C:\Users\georg\Documents\CODING\wax_baseball_parity
+python observability\capture_databricks_genie.py --space-id 01f1a7accb3713fca8a7ee2e13c8d652 `
+  --trace-out observability\traces\databricks_genie\<date>-g2.json
+```
+
+Genie's conversation API streams no progress of its own — `start_conversation` returns
+a pollable `Wait[GenieMessage]`, and the script calls `get_message` itself in a loop,
+wall-clock-timestamping every status change (SUBMITTED → FETCHING_METADATA →
+FILTERING_CONTEXT → ASKING_AI → PENDING_WAREHOUSE → **ASKING_AI again** → COMPLETED —
+measured 2026-09-03: the model is invoked twice per turn, once to plan the query and
+once to phrase the final answer).
