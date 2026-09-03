@@ -124,3 +124,24 @@ wall-clock-timestamping every status change (SUBMITTED → FETCHING_METADATA →
 FILTERING_CONTEXT → ASKING_AI → PENDING_WAREHOUSE → **ASKING_AI again** → COMPLETED —
 measured 2026-09-03: the model is invoked twice per turn, once to plan the query and
 once to phrase the final answer).
+
+Capture a new Snowflake Cortex Agent run: `observability/capture_snowflake_cortex_agent.py`
+(needs the `snow` CLI with the `wax_baseball_key` key-pair connection — MFA is enforced
+on the account — and the agent from `wax_baseball_snowflake/sql/30_cortex_agent_keeping_score.sql`,
+which is one `CREATE AGENT` statement, no UI). This is the one cell with **two sources**:
+the script streams `POST …/agents/{name}:run` (SSE, wall-clock-stamped at receipt) and,
+after a 20 s ingest wait, queries `SNOWFLAKE.LOCAL.AI_OBSERVABILITY_EVENTS` for the spans
+Snowflake wrote for the same `request_id` — the extractor reconciles the two:
+
+```powershell
+cd C:\Users\georg\Documents\CODING\wax_baseball_parity
+python -X utf8 observability\capture_snowflake_cortex_agent.py --trace-out observability\traces\snowflake_cortex\<date>-g2.json
+```
+
+Measured 2026-09-03: the event table needs no setup and is the richest platform-side
+record of any surface (per-step model + token counts, `final_sql`, `query_id`, `status.code`,
+and the platform's own latency verdict). One caveat lives upstream of the agent: Cortex
+Analyst rejects the parity tables' quoted-lowercase columns (error 392700) that plain
+`SEMANTIC_VIEW()` SQL accepts — the semantic view is built over generated unquoted views
+(`wax_baseball_snowflake/sql/15`) for that reason; `…-run1-validation-failure.json` is
+the receipt.

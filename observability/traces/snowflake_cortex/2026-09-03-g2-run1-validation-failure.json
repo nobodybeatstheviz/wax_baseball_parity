@@ -1,0 +1,908 @@
+{
+  "captured_at": "2026-09-03T15:45:05.018057+00:00",
+  "surface": "snowflake_cortex_agent",
+  "agent": "BASEBALL.SEMANTICS.KEEPING_SCORE_AGENT",
+  "question": "How many home runs have I witnessed in person?",
+  "http_status": 200,
+  "request_id": "519fa7f3-2059-4b46-9516-a62a9b57cd63",
+  "wall_clock_ms": 12371,
+  "events": [
+    {
+      "at_ms": 2129,
+      "event": "response.status",
+      "data": {
+        "message": "Planning the next steps",
+        "sequence_number": 0,
+        "status": "planning"
+      }
+    },
+    {
+      "at_ms": 3592,
+      "event": "response.status",
+      "data": {
+        "message": "Choosing data sources to use",
+        "sequence_number": 1,
+        "status": "extracting_tool_calls"
+      }
+    },
+    {
+      "at_ms": 3592,
+      "event": "response.status",
+      "data": {
+        "message": "Getting additional context",
+        "sequence_number": 2,
+        "status": "executing_tools"
+      }
+    },
+    {
+      "at_ms": 3592,
+      "event": "response.tool_use",
+      "data": {
+        "client_side_execute": false,
+        "content_index": 0,
+        "input": {
+          "pruning_question": "How many home runs have I witnessed in person across all attended games?"
+        },
+        "name": "query_keeping_score",
+        "sequence_number": 3,
+        "tool_use_id": "toolu_bdrk_017AGmcUvhX6sohR2v4wg2KV",
+        "type": "system_agentic_semantic_context"
+      }
+    },
+    {
+      "at_ms": 3592,
+      "event": "response.tool_result.status",
+      "data": {
+        "message": "Running query_keeping_score",
+        "sequence_number": 4,
+        "status": "executing_tool",
+        "tool_type": "system_agentic_semantic_context",
+        "tool_use_id": "toolu_bdrk_017AGmcUvhX6sohR2v4wg2KV"
+      }
+    },
+    {
+      "at_ms": 3626,
+      "event": "response.tool_result",
+      "data": {
+        "content": [
+          {
+            "json": {
+              "error": "Semantic model validation failed: Invalid semantic model yaml: 400: {'error_message': 'invalid column name \"game_id\": name must start with an underscore or a letter, and only contain letters, underscores, decimal digits (0-9), and dollar signs ($).', 'error_code': '392700'}",
+              "semantic_model_name": "",
+              "sql_best_practices": "ERROR: The semantic model failed validation and cannot be used. Do NOT generate or execute any SQL queries for this semantic model. Report the validation error to the user."
+            },
+            "type": "json"
+          }
+        ],
+        "content_index": 1,
+        "name": "query_keeping_score",
+        "sequence_number": 5,
+        "status": "success",
+        "tool_use_id": "toolu_bdrk_017AGmcUvhX6sohR2v4wg2KV",
+        "type": "system_agentic_semantic_context"
+      }
+    },
+    {
+      "at_ms": 3626,
+      "event": "response.status",
+      "data": {
+        "message": "Reviewing the results",
+        "sequence_number": 6,
+        "status": "reasoning_agent_stop"
+      }
+    },
+    {
+      "at_ms": 3626,
+      "event": "response.status",
+      "data": {
+        "message": "Rethinking the plan",
+        "sequence_number": 7,
+        "status": "reevaluating_plan"
+      }
+    },
+    {
+      "at_ms": 3626,
+      "event": "response.status",
+      "data": {
+        "message": "Planning the next steps",
+        "sequence_number": 8,
+        "status": "planning"
+      }
+    },
+    {
+      "at_ms": 5116,
+      "event": "response.status",
+      "data": {
+        "message": "Choosing data sources to use",
+        "sequence_number": 9,
+        "status": "extracting_tool_calls"
+      }
+    },
+    {
+      "at_ms": 5116,
+      "event": "response.status",
+      "data": {
+        "message": "Getting additional context",
+        "sequence_number": 10,
+        "status": "executing_tools"
+      }
+    },
+    {
+      "at_ms": 5116,
+      "event": "response.tool_use",
+      "data": {
+        "client_side_execute": false,
+        "content_index": 2,
+        "input": {
+          "pruning_question": "Total home runs witnessed in person"
+        },
+        "name": "query_keeping_score",
+        "sequence_number": 11,
+        "tool_use_id": "toolu_bdrk_01CEfLg13vCfD1BHm61XxrqK",
+        "type": "system_agentic_semantic_context"
+      }
+    },
+    {
+      "at_ms": 5116,
+      "event": "response.tool_result.status",
+      "data": {
+        "message": "Running query_keeping_score",
+        "sequence_number": 12,
+        "status": "executing_tool",
+        "tool_type": "system_agentic_semantic_context",
+        "tool_use_id": "toolu_bdrk_01CEfLg13vCfD1BHm61XxrqK"
+      }
+    },
+    {
+      "at_ms": 5153,
+      "event": "response.tool_result",
+      "data": {
+        "content": [
+          {
+            "json": {
+              "error": "Semantic model validation failed: Invalid semantic model yaml: 400: {'error_message': 'invalid column name \"game_id\": name must start with an underscore or a letter, and only contain letters, underscores, decimal digits (0-9), and dollar signs ($).', 'error_code': '392700'}",
+              "semantic_model_name": "",
+              "sql_best_practices": "ERROR: The semantic model failed validation and cannot be used. Do NOT generate or execute any SQL queries for this semantic model. Report the validation error to the user."
+            },
+            "type": "json"
+          }
+        ],
+        "content_index": 3,
+        "name": "query_keeping_score",
+        "sequence_number": 13,
+        "status": "success",
+        "tool_use_id": "toolu_bdrk_01CEfLg13vCfD1BHm61XxrqK",
+        "type": "system_agentic_semantic_context"
+      }
+    },
+    {
+      "at_ms": 5153,
+      "event": "response.status",
+      "data": {
+        "message": "Reviewing the results",
+        "sequence_number": 14,
+        "status": "reasoning_agent_stop"
+      }
+    },
+    {
+      "at_ms": 5153,
+      "event": "response.status",
+      "data": {
+        "message": "Rethinking the plan",
+        "sequence_number": 15,
+        "status": "reevaluating_plan"
+      }
+    },
+    {
+      "at_ms": 5153,
+      "event": "response.status",
+      "data": {
+        "message": "Planning the next steps",
+        "sequence_number": 16,
+        "status": "planning"
+      }
+    },
+    {
+      "at_ms": 7083,
+      "event": "response.thinking.delta",
+      "data": {
+        "content_index": 4,
+        "sequence_number": 17,
+        "text": "The sem"
+      }
+    },
+    {
+      "at_ms": 7565,
+      "event": "response.thinking.delta",
+      "data": {
+        "content_index": 4,
+        "sequence_number": 18,
+        "text": "antic model is failing validation"
+      }
+    },
+    {
+      "at_ms": 7565,
+      "event": "response.thinking.delta",
+      "data": {
+        "content_index": 4,
+        "sequence_number": 19,
+        "text": ". I cannot use it."
+      }
+    },
+    {
+      "at_ms": 7565,
+      "event": "response.thinking.delta",
+      "data": {
+        "content_index": 4,
+        "sequence_number": 20,
+        "text": " I should report the error to the user"
+      }
+    },
+    {
+      "at_ms": 7565,
+      "event": "response.thinking.delta",
+      "data": {
+        "content_index": 4,
+        "sequence_number": 21,
+        "text": " hon"
+      }
+    },
+    {
+      "at_ms": 7565,
+      "event": "response.thinking.delta",
+      "data": {
+        "content_index": 4,
+        "sequence_number": 22,
+        "text": "estly."
+      }
+    },
+    {
+      "at_ms": 7565,
+      "event": "response.thinking",
+      "data": {
+        "content_index": 4,
+        "sequence_number": 23,
+        "text": "The semantic model is failing validation. I cannot use it. I should report the error to the user honestly."
+      }
+    },
+    {
+      "at_ms": 7565,
+      "event": "response.text.delta",
+      "data": {
+        "content_index": 5,
+        "sequence_number": 24,
+        "text": "I'm unable to answer"
+      }
+    },
+    {
+      "at_ms": 7566,
+      "event": "response.text.delta",
+      "data": {
+        "content_index": 5,
+        "sequence_number": 25,
+        "text": " this right now. The"
+      }
+    },
+    {
+      "at_ms": 7566,
+      "event": "response.text.delta",
+      "data": {
+        "content_index": 5,
+        "sequence_number": 26,
+        "text": " Ke"
+      }
+    },
+    {
+      "at_ms": 8013,
+      "event": "response.text.delta",
+      "data": {
+        "content_index": 5,
+        "sequence_number": 27,
+        "text": "eping Score semantic view"
+      }
+    },
+    {
+      "at_ms": 8013,
+      "event": "response.text.delta",
+      "data": {
+        "content_index": 5,
+        "sequence_number": 28,
+        "text": " is curr"
+      }
+    },
+    {
+      "at_ms": 8013,
+      "event": "response.text.delta",
+      "data": {
+        "content_index": 5,
+        "sequence_number": 29,
+        "text": "ently failing validation due to a"
+      }
+    },
+    {
+      "at_ms": 8013,
+      "event": "response.text.delta",
+      "data": {
+        "content_index": 5,
+        "sequence_number": 30,
+        "text": " configuration iss"
+      }
+    },
+    {
+      "at_ms": 8013,
+      "event": "response.text.delta",
+      "data": {
+        "content_index": 5,
+        "sequence_number": 31,
+        "text": "ue in"
+      }
+    },
+    {
+      "at_ms": 8013,
+      "event": "response.text.delta",
+      "data": {
+        "content_index": 5,
+        "sequence_number": 32,
+        "text": " its"
+      }
+    },
+    {
+      "at_ms": 8013,
+      "event": "response.text.delta",
+      "data": {
+        "content_index": 5,
+        "sequence_number": 33,
+        "text": " under"
+      }
+    },
+    {
+      "at_ms": 8014,
+      "event": "response.text.delta",
+      "data": {
+        "content_index": 5,
+        "sequence_number": 34,
+        "text": "lying model (an invalid"
+      }
+    },
+    {
+      "at_ms": 8510,
+      "event": "response.text.delta",
+      "data": {
+        "content_index": 5,
+        "sequence_number": 35,
+        "text": " column name,"
+      }
+    },
+    {
+      "at_ms": 8512,
+      "event": "response.text.delta",
+      "data": {
+        "content_index": 5,
+        "sequence_number": 36,
+        "text": " `game_id`,"
+      }
+    },
+    {
+      "at_ms": 8512,
+      "event": "response.text.delta",
+      "data": {
+        "content_index": 5,
+        "sequence_number": 37,
+        "text": " that"
+      }
+    },
+    {
+      "at_ms": 8512,
+      "event": "response.text.delta",
+      "data": {
+        "content_index": 5,
+        "sequence_number": 38,
+        "text": " doesn't meet na"
+      }
+    },
+    {
+      "at_ms": 8512,
+      "event": "response.text.delta",
+      "data": {
+        "content_index": 5,
+        "sequence_number": 39,
+        "text": "ming requ"
+      }
+    },
+    {
+      "at_ms": 8512,
+      "event": "response.text.delta",
+      "data": {
+        "content_index": 5,
+        "sequence_number": 40,
+        "text": "irements)."
+      }
+    },
+    {
+      "at_ms": 8513,
+      "event": "response.text.delta",
+      "data": {
+        "content_index": 5,
+        "sequence_number": 41,
+        "text": " Because of"
+      }
+    },
+    {
+      "at_ms": 8513,
+      "event": "response.text.delta",
+      "data": {
+        "content_index": 5,
+        "sequence_number": 42,
+        "text": " this"
+      }
+    },
+    {
+      "at_ms": 8959,
+      "event": "response.text.delta",
+      "data": {
+        "content_index": 5,
+        "sequence_number": 43,
+        "text": " error"
+      }
+    },
+    {
+      "at_ms": 8959,
+      "event": "response.text.delta",
+      "data": {
+        "content_index": 5,
+        "sequence_number": 44,
+        "text": ", I can't run any"
+      }
+    },
+    {
+      "at_ms": 8959,
+      "event": "response.text.delta",
+      "data": {
+        "content_index": 5,
+        "sequence_number": 45,
+        "text": " queries against it to"
+      }
+    },
+    {
+      "at_ms": 8959,
+      "event": "response.text.delta",
+      "data": {
+        "content_index": 5,
+        "sequence_number": 46,
+        "text": " ret"
+      }
+    },
+    {
+      "at_ms": 8963,
+      "event": "response.text.delta",
+      "data": {
+        "content_index": 5,
+        "sequence_number": 47,
+        "text": "rieve your"
+      }
+    },
+    {
+      "at_ms": 8963,
+      "event": "response.text.delta",
+      "data": {
+        "content_index": 5,
+        "sequence_number": 48,
+        "text": " home run count.\n\nThis need"
+      }
+    },
+    {
+      "at_ms": 8963,
+      "event": "response.text.delta",
+      "data": {
+        "content_index": 5,
+        "sequence_number": 49,
+        "text": "s to be fixed in the"
+      }
+    },
+    {
+      "at_ms": 8963,
+      "event": "response.text.delta",
+      "data": {
+        "content_index": 5,
+        "sequence_number": 50,
+        "text": " semantic model definition before"
+      }
+    },
+    {
+      "at_ms": 9410,
+      "event": "response.text.delta",
+      "data": {
+        "content_index": 5,
+        "sequence_number": 51,
+        "text": " I can p"
+      }
+    },
+    {
+      "at_ms": 9410,
+      "event": "response.text.delta",
+      "data": {
+        "content_index": 5,
+        "sequence_number": 52,
+        "text": "ull govern"
+      }
+    },
+    {
+      "at_ms": 9412,
+      "event": "response.text.delta",
+      "data": {
+        "content_index": 5,
+        "sequence_number": 53,
+        "text": "ed metrics like"
+      }
+    },
+    {
+      "at_ms": 9412,
+      "event": "response.text.delta",
+      "data": {
+        "content_index": 5,
+        "sequence_number": 54,
+        "text": " home run"
+      }
+    },
+    {
+      "at_ms": 9412,
+      "event": "response.text.delta",
+      "data": {
+        "content_index": 5,
+        "sequence_number": 55,
+        "text": "s witnessed. Once"
+      }
+    },
+    {
+      "at_ms": 9418,
+      "event": "response.text.delta",
+      "data": {
+        "content_index": 5,
+        "sequence_number": 56,
+        "text": " the model is corrected, I"
+      }
+    },
+    {
+      "at_ms": 9418,
+      "event": "response.text.delta",
+      "data": {
+        "content_index": 5,
+        "sequence_number": 57,
+        "text": "'d be happy to get"
+      }
+    },
+    {
+      "at_ms": 9418,
+      "event": "response.text.delta",
+      "data": {
+        "content_index": 5,
+        "sequence_number": 58,
+        "text": " you that"
+      }
+    },
+    {
+      "at_ms": 9463,
+      "event": "response.text.delta",
+      "data": {
+        "content_index": 5,
+        "sequence_number": 59,
+        "text": " number."
+      }
+    },
+    {
+      "at_ms": 9505,
+      "event": "response.text",
+      "data": {
+        "content_index": 5,
+        "sequence_number": 60,
+        "text": "I'm unable to answer this right now. The Keeping Score semantic view is currently failing validation due to a configuration issue in its underlying model (an invalid column name, `game_id`, that doesn't meet naming requirements). Because of this error, I can't run any queries against it to retrieve your home run count.\n\nThis needs to be fixed in the semantic model definition before I can pull governed metrics like home runs witnessed. Once the model is corrected, I'd be happy to get you that number."
+      }
+    },
+    {
+      "at_ms": 9505,
+      "event": "response.status",
+      "data": {
+        "message": "Reviewing the results",
+        "sequence_number": 61,
+        "status": "reasoning_agent_stop"
+      }
+    },
+    {
+      "at_ms": 9505,
+      "event": "response.status",
+      "data": {
+        "message": "Forming the answer",
+        "sequence_number": 62,
+        "status": "proceeding_to_answer"
+      }
+    },
+    {
+      "at_ms": 11639,
+      "event": "response",
+      "data": {
+        "content": [
+          {
+            "tool_use": {
+              "client_side_execute": false,
+              "input": {
+                "pruning_question": "How many home runs have I witnessed in person across all attended games?"
+              },
+              "name": "query_keeping_score",
+              "tool_use_id": "toolu_bdrk_017AGmcUvhX6sohR2v4wg2KV",
+              "type": "system_agentic_semantic_context"
+            },
+            "type": "tool_use"
+          },
+          {
+            "tool_result": {
+              "content": [
+                {
+                  "json": {
+                    "error": "Semantic model validation failed: Invalid semantic model yaml: 400: {'error_message': 'invalid column name \"game_id\": name must start with an underscore or a letter, and only contain letters, underscores, decimal digits (0-9), and dollar signs ($).', 'error_code': '392700'}",
+                    "semantic_model_name": "",
+                    "sql_best_practices": "ERROR: The semantic model failed validation and cannot be used. Do NOT generate or execute any SQL queries for this semantic model. Report the validation error to the user."
+                  },
+                  "type": "json"
+                }
+              ],
+              "name": "query_keeping_score",
+              "status": "success",
+              "tool_use_id": "toolu_bdrk_017AGmcUvhX6sohR2v4wg2KV",
+              "type": "system_agentic_semantic_context"
+            },
+            "type": "tool_result"
+          },
+          {
+            "tool_use": {
+              "client_side_execute": false,
+              "input": {
+                "pruning_question": "Total home runs witnessed in person"
+              },
+              "name": "query_keeping_score",
+              "tool_use_id": "toolu_bdrk_01CEfLg13vCfD1BHm61XxrqK",
+              "type": "system_agentic_semantic_context"
+            },
+            "type": "tool_use"
+          },
+          {
+            "tool_result": {
+              "content": [
+                {
+                  "json": {
+                    "error": "Semantic model validation failed: Invalid semantic model yaml: 400: {'error_message': 'invalid column name \"game_id\": name must start with an underscore or a letter, and only contain letters, underscores, decimal digits (0-9), and dollar signs ($).', 'error_code': '392700'}",
+                    "semantic_model_name": "",
+                    "sql_best_practices": "ERROR: The semantic model failed validation and cannot be used. Do NOT generate or execute any SQL queries for this semantic model. Report the validation error to the user."
+                  },
+                  "type": "json"
+                }
+              ],
+              "name": "query_keeping_score",
+              "status": "success",
+              "tool_use_id": "toolu_bdrk_01CEfLg13vCfD1BHm61XxrqK",
+              "type": "system_agentic_semantic_context"
+            },
+            "type": "tool_result"
+          },
+          {
+            "thinking": {
+              "text": "The semantic model is failing validation. I cannot use it. I should report the error to the user honestly."
+            },
+            "type": "thinking"
+          },
+          {
+            "text": "I'm unable to answer this right now. The Keeping Score semantic view is currently failing validation due to a configuration issue in its underlying model (an invalid column name, `game_id`, that doesn't meet naming requirements). Because of this error, I can't run any queries against it to retrieve your home run count.\n\nThis needs to be fixed in the semantic model definition before I can pull governed metrics like home runs witnessed. Once the model is corrected, I'd be happy to get you that number.",
+            "type": "text"
+          }
+        ],
+        "metadata": {
+          "usage": {
+            "tokens_consumed": [
+              {
+                "context_window": 1000000,
+                "input_tokens": {
+                  "cache_read": 23047,
+                  "cache_write": 10339,
+                  "total": 33394,
+                  "uncached": 8
+                },
+                "model_name": "claude-opus-4-8",
+                "output_tokens": {
+                  "total": 342
+                }
+              }
+            ]
+          }
+        },
+        "role": "assistant",
+        "schema_version": "v2",
+        "sequence_number": 63,
+        "status": "completed"
+      }
+    },
+    {
+      "at_ms": 12370,
+      "event": "done",
+      "data": {
+        "_raw": "[DONE]"
+      }
+    }
+  ],
+  "final": {
+    "content": [
+      {
+        "tool_use": {
+          "client_side_execute": false,
+          "input": {
+            "pruning_question": "How many home runs have I witnessed in person across all attended games?"
+          },
+          "name": "query_keeping_score",
+          "tool_use_id": "toolu_bdrk_017AGmcUvhX6sohR2v4wg2KV",
+          "type": "system_agentic_semantic_context"
+        },
+        "type": "tool_use"
+      },
+      {
+        "tool_result": {
+          "content": [
+            {
+              "json": {
+                "error": "Semantic model validation failed: Invalid semantic model yaml: 400: {'error_message': 'invalid column name \"game_id\": name must start with an underscore or a letter, and only contain letters, underscores, decimal digits (0-9), and dollar signs ($).', 'error_code': '392700'}",
+                "semantic_model_name": "",
+                "sql_best_practices": "ERROR: The semantic model failed validation and cannot be used. Do NOT generate or execute any SQL queries for this semantic model. Report the validation error to the user."
+              },
+              "type": "json"
+            }
+          ],
+          "name": "query_keeping_score",
+          "status": "success",
+          "tool_use_id": "toolu_bdrk_017AGmcUvhX6sohR2v4wg2KV",
+          "type": "system_agentic_semantic_context"
+        },
+        "type": "tool_result"
+      },
+      {
+        "tool_use": {
+          "client_side_execute": false,
+          "input": {
+            "pruning_question": "Total home runs witnessed in person"
+          },
+          "name": "query_keeping_score",
+          "tool_use_id": "toolu_bdrk_01CEfLg13vCfD1BHm61XxrqK",
+          "type": "system_agentic_semantic_context"
+        },
+        "type": "tool_use"
+      },
+      {
+        "tool_result": {
+          "content": [
+            {
+              "json": {
+                "error": "Semantic model validation failed: Invalid semantic model yaml: 400: {'error_message': 'invalid column name \"game_id\": name must start with an underscore or a letter, and only contain letters, underscores, decimal digits (0-9), and dollar signs ($).', 'error_code': '392700'}",
+                "semantic_model_name": "",
+                "sql_best_practices": "ERROR: The semantic model failed validation and cannot be used. Do NOT generate or execute any SQL queries for this semantic model. Report the validation error to the user."
+              },
+              "type": "json"
+            }
+          ],
+          "name": "query_keeping_score",
+          "status": "success",
+          "tool_use_id": "toolu_bdrk_01CEfLg13vCfD1BHm61XxrqK",
+          "type": "system_agentic_semantic_context"
+        },
+        "type": "tool_result"
+      },
+      {
+        "thinking": {
+          "text": "The semantic model is failing validation. I cannot use it. I should report the error to the user honestly."
+        },
+        "type": "thinking"
+      },
+      {
+        "text": "I'm unable to answer this right now. The Keeping Score semantic view is currently failing validation due to a configuration issue in its underlying model (an invalid column name, `game_id`, that doesn't meet naming requirements). Because of this error, I can't run any queries against it to retrieve your home run count.\n\nThis needs to be fixed in the semantic model definition before I can pull governed metrics like home runs witnessed. Once the model is corrected, I'd be happy to get you that number.",
+        "type": "text"
+      }
+    ],
+    "metadata": {
+      "usage": {
+        "tokens_consumed": [
+          {
+            "context_window": 1000000,
+            "input_tokens": {
+              "cache_read": 23047,
+              "cache_write": 10339,
+              "total": 33394,
+              "uncached": 8
+            },
+            "model_name": "claude-opus-4-8",
+            "output_tokens": {
+              "total": 342
+            }
+          }
+        ]
+      }
+    },
+    "role": "assistant",
+    "schema_version": "v2",
+    "sequence_number": 63,
+    "status": "completed"
+  },
+  "event_table": {
+    "table": "SNOWFLAKE.LOCAL.AI_OBSERVABILITY_EVENTS",
+    "rows": [
+      {
+        "TIMESTAMP": "2026-09-03T15:44:38.177000",
+        "START_TIMESTAMP": "2026-09-03T15:44:27.441000",
+        "TRACE": "{\n  \"span_id\": \"80b301120f1bfde2\",\n  \"trace_id\": \"01c6d390e9d03d629c037b39623edbe4\"\n}",
+        "SCOPE": "{\n  \"name\": \"snow.cortex.agent\"\n}",
+        "RECORD_TYPE": "SPAN",
+        "RECORD": "{\n  \"kind\": \"SPAN_KIND_INTERNAL\",\n  \"name\": \"Agent\",\n  \"status\": {\n    \"code\": \"STATUS_CODE_OK\"\n  }\n}",
+        "RECORD_ATTRIBUTES": "{\n  \"ai.observability.input_id\": \"640808a736324a1c652d0027b03666de\",\n  \"ai.observability.record_id\": \"519fa7f3-2059-4b46-9516-a62a9b57cd63\",\n  \"request_id\": \"519fa7f3-2059-4b46-9516-a62a9b57cd63\",\n  \"snow.ai.observability.database.id\": 480470948,\n  \"snow.ai.observability.database.name\": \"BASEBALL\",\n  \"snow.ai.observability.object.id\": 480470792,\n  \"snow.ai.observability.object.name\": \"KEEPING_SCORE_AGENT\",\n  \"snow.ai.observability.object.type\": \"Cortex Agent\",\n  \"snow.ai.observability.object.version.id\": 123000537097,\n  \"snow.ai.observability.object.version.name\": \"LIVE\",\n  \"snow.ai.observability.schema.id\": 123000523749,\n  \"snow.ai.observability.schema.name\": \"SEMANTICS\",\n  \"snow.ai.observability.span_kind\": \"1\"\n}"
+      },
+      {
+        "TIMESTAMP": "2026-09-03T15:44:38.177000",
+        "START_TIMESTAMP": "2026-09-03T15:44:27.441000",
+        "TRACE": "{\n  \"span_id\": \"a891b90f6032a207\",\n  \"trace_id\": \"01c6d390e9d03d629c037b39623edbe4\"\n}",
+        "SCOPE": "{\n  \"name\": \"snow.cortex.agent\"\n}",
+        "RECORD_TYPE": "SPAN",
+        "RECORD": "{\n  \"kind\": \"SPAN_KIND_INTERNAL\",\n  \"name\": \"AgentV2RequestResponseInfo\",\n  \"parent_span_id\": \"80b301120f1bfde2\",\n  \"status\": {\n    \"code\": \"STATUS_CODE_OK\"\n  }\n}",
+        "RECORD_ATTRIBUTES": "{\n  \"ai.observability.input_id\": \"640808a736324a1c652d0027b03666de\",\n  \"ai.observability.record_id\": \"519fa7f3-2059-4b46-9516-a62a9b57cd63\",\n  \"ai.observability.record_root.input\": \"How many home runs have I witnessed in person?\",\n  \"ai.observability.record_root.output\": \"I'm unable to answer this right now. The Keeping Score semantic view is currently failing validation due to a configuration issue in its underlying model (an invalid column name, `game_id`, that doesn't meet naming requirements). Because of this error, I can't run any queries against it to retrieve your home run count.\\n\\nThis needs to be fixed in the semantic model definition before I can pull governed metrics like home runs witnessed. Once the model is corrected, I'd be happy to get you that number.\",\n  \"ai.observability.span_type\": \"record_root\",\n  \"snow.ai.observability.agent.duration\": 10735,\n  \"snow.ai.observability.agent.first_message_in_thread\": \"How many home runs have I witnessed in person?\",\n  \"snow.ai.observability.agent.messages\": \"How many home runs have I witnessed in person?\",\n  \"snow.ai.observability.agent.parent_message_id\": 0,\n  \"snow.ai.observability.agent.request_id\": \"519fa7f3-2059-4b46-9516-a62a9b57cd63\",\n  \"snow.ai.observability.agent.research_mode\": false,\n  \"snow.ai.observability.agent.response\": \"I'm unable to answer this right now. The Keeping Score semantic view is currently failing validation due to a configuration issue in its underlying model (an invalid column name, `game_id`, that doesn't meet naming requirements). Because of this error, I can't run any queries against it to retrieve your home run count.\\n\\nThis needs to be fixed in the semantic model definition before I can pull governed metrics like home runs witnessed. Once the model is corrected, I'd be happy to get you that number.\",\n  \"snow.ai.observability.agent.status\": \"SUCCESS\",\n  \"snow.ai.observability.agent.status.code\": \"200\",\n  \"snow.ai.observability.agent.status.description\": \"SLOW\",\n  \"snow.ai.observability.agent.thinking_response\": \"The semantic model is failing validation. I cannot use it. I should report the error to the user honestly.\",\n  \"snow.ai.observability.agent.thread_id\": 0,\n  \"snow.ai.observability.agent.thread_id.messages\": \"[\\\"User: How many home runs have I witnessed in person?\\\",\\\"Assistant: I'm unable to answer this right now. The Keeping Score semantic view is currently failing validation due to a configuration issue in its underlying model (an invalid column name, `game_id`, that doesn't meet naming requirements). Because of this error, I can't run any queries against it to retrieve your home run count.\\\\n\\\\nThis needs to be fixed in the semantic model definition before I can pull governed metrics like home runs witnessed. Once the model is corrected, I'd be happy to get you that number.\\\"]\",\n  \"snow.ai.observability.agent.tool_choice.input_timestamp\": \"2026-09-03T15:44:27.441757686Z\",\n  \"snow.ai.observability.database.id\": 480470948,\n  \"snow.ai.observability.database.name\": \"BASEBALL\",\n  \"snow.ai.observability.object.id\": 480470792,\n  \"snow.ai.observability.object.name\": \"KEEPING_SCORE_AGENT\",\n  \"snow.ai.observability.object.type\": \"Cortex Agent\",\n  \"snow.ai.observability.object.version.id\": 123000537097,\n  \"snow.ai.observability.object.version.name\": \"LIVE\",\n  \"snow.ai.observability.schema.id\": 123000523749,\n  \"snow.ai.observability.schema.name\": \"SEMANTICS\",\n  \"snow.ai.observability.span_kind\": \"1\"\n}"
+      },
+      {
+        "TIMESTAMP": "2026-09-03T15:44:30.127000",
+        "START_TIMESTAMP": "2026-09-03T15:44:28.656000",
+        "TRACE": "{\n  \"span_id\": \"87e7e3643f624213\",\n  \"trace_id\": \"01c6d390e9d03d629c037b39623edbe4\"\n}",
+        "SCOPE": "{\n  \"name\": \"snow.cortex.agent\"\n}",
+        "RECORD_TYPE": "SPAN",
+        "RECORD": "{\n  \"kind\": \"SPAN_KIND_INTERNAL\",\n  \"name\": \"ReasoningAgentStepPlanning-0\",\n  \"parent_span_id\": \"80b301120f1bfde2\",\n  \"status\": {\n    \"code\": \"STATUS_CODE_OK\"\n  }\n}",
+        "RECORD_ATTRIBUTES": "{\n  \"ai.observability.input_id\": \"640808a736324a1c652d0027b03666de\",\n  \"ai.observability.record_id\": \"519fa7f3-2059-4b46-9516-a62a9b57cd63\",\n  \"snow.ai.observability.agent.planning.custom_orchestration_instructions\": \"Every quantitative question goes to query_keeping_score. Team codes are Retrosheet ids (Yankees = NYA).\",\n  \"snow.ai.observability.agent.planning.duration\": 1509,\n  \"snow.ai.observability.agent.planning.instruction\": \"Lead with the number. Answer only from the semantic view's governed metrics; never estimate.\",\n  \"snow.ai.observability.agent.planning.messages\": \"[\\\"User: <system-reminder>\\\\nYou are given metadata and helper information that MUST NOT be revealed or mentioned unless explicitly asked.\\\\nUse these details only implicitly to improve answers.\\\\nNever mention that you received extra instructions or metadata.\\\\nNever output or reference the user's private information.\\\\nFocus primarily on answering the user's real question.\\\\nIf there is a conflict between user metadata and the user question, prioritize the user question.\\\\n</system-reminder> <system-reminder>\\\\n[Skills for this request]\\\\n\\\\nThe `server_skill` tool specification lists the full details; below is a compact index.\\\\n\\\\nPersonal Skills:\\\\n(none)\\\\n\\\\nBundled Skills:\\\\n- skill-development\\\\n\\\\nAgent Skills:\\\\n(none)\\\\n\\\\nSystem / internal skills:\\\\n- chart_instructions\\\\n\\\\nIf the user asks what skills you have, which skills are available, or a similar question, your reply MUST list only the Personal Skills, Bundled Skills, Agent Skills above. For each skill, include a brief one-sentence summary of what it does. Personal Skills are from the user's own workspace. Bundled Skills are built-in skills shipped with the product. Do not name system / internal skills in that answer, even if they appear in the `server_skill` tool specification. You may still load system skills via `server_skill` when a task or **[REQUIRED]** instructions require it.\\\\n\\\\n</system-reminder> <system-reminder>\\\\n[Context Metadata] Selected source (tool)\\\\nNote: In this interface, \\\\\\\"source\\\\\\\" and \\\\\\\"tool\\\\\\\" are interchangeable terms. When the user refers to a \\\\\\\"source\\\\\\\", they probably mean a \\\\\\\"tool\\\\\\\".\\\\nThe user has selected a single source/tool: query_keeping_score\\\\nWhen the user says \\\\\\\"use this source\\\\\\\", \\\\\\\"use this tool\\\\\\\", \\\\\\\"use the source\\\\\\\", or \\\\\\\"use the tool\\\\\\\", they are referring to: query_keeping_score\\\\n</system-reminder> <system-reminder>\\\\n[Channel Discipline]\\\\nPlan narration aimed at the user \u2014 phrases like \\\\\\\"Let me first\u2026\\\\\\\", \\\\\\\"I'll help you find\u2026\\\\\\\", \\\\\\\"Now I need to check\u2026\\\\\\\", \\\\\\\"Let me double-check by\u2026\\\\\\\", \\\\\\\"Let me start by\u2026\\\\\\\" \u2014 is internal reasoning, NOT user-facing answer text.\\\\n- Such narration MUST stay inside <thinking>...</thinking>.\\\\n- Do not emit it as bare text after </thinking>.\\\\n- Only emit user-facing text once you have everything you need to deliver the final answer; otherwise close </thinking> and go straight to the next tool call.\\\\n</system-reminder> How many home runs have I witnessed in person?\\\"]\",\n  \"snow.ai.observability.agent.planning.model\": \"claude-opus-4-8\",\n  \"snow.ai.observability.agent.planning.query\": \"How many home runs have I witnessed in person?\",\n  \"snow.ai.observability.agent.planning.request_id\": \"519fa7f3-2059-4b46-9516-a62a9b57cd63\",\n  \"snow.ai.observability.agent.planning.status\": \"SUCCESS\",\n  \"snow.ai.observability.agent.planning.status.code\": \"200\",\n  \"snow.ai.observability.agent.planning.step_number\": 0,\n  \"snow.ai.observability.agent.planning.token_count.cache_read_input\": 0,\n  \"snow.ai.observability.agent.planning.token_count.cache_write_input\": 7427,\n  \"snow.ai.observability.agent.planning.token_count.input\": 7429,\n  \"snow.ai.observability.agent.planning.token_count.output\": 73,\n  \"snow.ai.observability.agent.planning.token_count.plan\": 73,\n  \"snow.ai.observability.agent.planning.token_count.total\": 7502,\n  \"snow.ai.observability.agent.planning.tool.description\": \"[\\\"Semantic model context tool for SQL generation against data model: query_keeping_score - Queries the Keeping Score semantic view: Wax's 178 attended MLB games (1984-2025) \u00e2\u20ac\u201d games attended, unique stadiums, home runs witnessed, runs witnessed, Hall of Famers seen, games per attendee, and a team's attended win rate.. Execute SQL on warehouse: WAX_WH.\\\\n\\\\n## How to Use This Tool\\\\n\\\\n**Step 1**: Call this tool FIRST to understand the data model before writing SQL.\\\\n\\\\n**Step 2**: Review the response which includes:\\\\n- Tables with their logical column names (dimensions, measures, time_dimensions)\\\\n- Dimensions with sample values for literal matching (use these exact values in WHERE clauses)\\\\n- Verified Queries (VQRs) - proven SQL examples that answer similar questions\\\\n- Custom Instructions - domain-specific rules you MUST follow\\\\n- SQL Best Practices - general SQL generation guidelines\\\\n\\\\n**Step 3**: Write your SQL query using the LOGICAL column and table names from the semantic model.\\\\n- Use column names from dimensions, measures, and time_dimensions\\\\n- Use logical table names (not fully qualified physical table names)\\\\n- The SQL will be automatically postprocessed to resolve to physical names\\\\n- Use sample_values from dimensions to match user-mentioned values (e.g., if user says \\\\\\\"California\\\\\\\", check sample_values for the exact format like \\\\\\\"CA\\\\\\\" or \\\\\\\"California\\\\\\\")\\\\n- If you need specific literals not in sample_values, use the system_literal_retriever tool to search for matching values\\\\n\\\\n**Step 4**: Execute your SQL using the system_execute_sql tool with the semantic_model parameter.\\\\n\\\\n## Critical Rules\\\\n- **Table Names**: Use the logical table names from the semantic model, prepended with \\\\\\\"__\\\\\\\" (e.g., \\\\\\\"__orders\\\\\\\" not the base table \\\\\\\"DATABASE.SCHEMA.ORDERS_FACT\\\\\\\")\\\\n- **Column Names**: Use column names from dimensions, measures, and time_dimensions in the semantic model\\\\n- If a VQR matches the user's question, adapt it using the column names in the semantic model\\\\n- Custom Instructions override general best practices when they conflict\\\\n- For text filtering, use ILIKE for case-insensitive matching\\\\n- Use sample_values to find exact literal values for WHERE clauses - if not found, use system_literal_retriever\\\\n\\\\n\\\\n## Covered Physical Tables\\\\nYou MUST use this tool for any question involving these physical tables \u2014 it is the required way to query them. Do not explore or guess at the schema elsewhere:\\\\n- BASEBALL.WAX_BASEBALL.FCT_ATTENDED_GAMES\\\\n- BASEBALL.WAX_BASEBALL.FCT_ATTENDED_TEAM_GAMES\\\\n- BASEBALL.WAX_BASEBALL.FCT_GAME_ATTENDEE\\\\n- BASEBALL.WAX_BASEBALL.FCT_HOF_SIGHTINGS\\\\n- BASEBALL.WAX_BASEBALL.FCT_PLAYS\\\\n\\\",\\\"Execute SQL queries directly on the server-side with configurable result truncation and metadata return. The tool executes the SQL, waits for completion, and returns results with metadata.\\\"]\",\n  \"snow.ai.observability.agent.planning.tool.name\": \"[\\\"query_keeping_score\\\",\\\"system_execute_sql\\\"]\",\n  \"snow.ai.observability.agent.planning.tool.parameters\": \"[\\\"{\\\\\\\"properties\\\\\\\":{\\\\\\\"pruning_question\\\\\\\":{\\\\\\\"description\\\\\\\":\\\\\\\"A brief but fully formed analysis question used to prioritize what's shown when the semantic model is over the token budget. If the model is over budget (as described in the result of the tool as 'pruning note'), the verified queries and columns most relevant to this question are retained. It is ignored when the model already fits the budget, also indicated by the pruning note. If it was ignored once for a model, it will be ignored on future calls as well, so do not continue to set it if it's already been ignored. Set this the first time you call a given semantic model. If a previous call returned a pruned_note saying needed columns or verified queries are missing, refine pruning_question and call again, only once more as possibly the columns do not exist.\\\\\\\",\\\\\\\"type\\\\\\\":\\\\\\\"string\\\\\\\"}},\\\\\\\"type\\\\\\\":\\\\\\\"object\\\\\\\"}\\\",\\\"{\\\\\\\"properties\\\\\\\":{\\\\\\\"aisql_reasoning\\\\\\\":{\\\\\\\"description\\\\\\\":\\\\\\\"The reasoning behind using AISQL functionality. IMPORTANT: this should describe why AI_FILTER, AI_AGG, and AI_EXTRACT are being used.IMPORTANT: If no AISQL functionality is being used, the reasoning has to be empty.\\\\\\\",\\\\\\\"type\\\\\\\":\\\\\\\"string\\\\\\\"},\\\\\\\"error_correction\\\\\\\":{\\\\\\\"description\\\\\\\":\\\\\\\"If this call is attempting to repair or correct the SQL from a previous system_execute_sql tool use that failed, it is REQUIRED to set this to the tool_use_id of that failed call for proper tracking. Otherwise, omit or leave it empty.\\\\\\\",\\\\\\\"type\\\\\\\":\\\\\\\"string\\\\\\\"},\\\\\\\"max_result_size\\\\\\\":{\\\\\\\"description\\\\\\\":\\\\\\\"Maximum result size for truncation\\\\\\\",\\\\\\\"type\\\\\\\":\\\\\\\"integer\\\\\\\"},\\\\\\\"max_result_size_unit\\\\\\\":{\\\\\\\"description\\\\\\\":\\\\\\\"Unit for result truncation - \\\\\\\\\\\\\\\"bytes\\\\\\\\\\\\\\\" or \\\\\\\\\\\\\\\"cells\\\\\\\\\\\\\\\"\\\\\\\",\\\\\\\"type\\\\\\\":\\\\\\\"string\\\\\\\"},\\\\\\\"semantic_model\\\\\\\":{\\\\\\\"description\\\\\\\":\\\\\\\"Name of the semantic model tool to use for SQL validation and postprocessing. If you used a semantic model to generate the SQL, it is REQUIRED to set this to the name of the semantic model tool, or the SQL you write to query a semantic model will likely fail. If the semantic model you want to use is not in the list, you should not use the system_execute_sql tool.\\\\\\\",\\\\\\\"enum\\\\\\\":[\\\\\\\"query_keeping_score\\\\\\\"],\\\\\\\"type\\\\\\\":\\\\\\\"string\\\\\\\"},\\\\\\\"skill_used\\\\\\\":{\\\\\\\"description\\\\\\\":\\\\\\\"Set to the name of the skill whose instructions you are following when writing this SQL. REQUIRED on every SQL execution made as part of a skill's workflow \u2014 including probing, exploration, and validation steps, not just the final analysis. If not executing SQL based on a skill, omit.\\\\\\\",\\\\\\\"enum\\\\\\\":[\\\\\\\"chart_instructions\\\\\\\",\\\\\\\"skill-development\\\\\\\"],\\\\\\\"type\\\\\\\":\\\\\\\"string\\\\\\\"},\\\\\\\"sql\\\\\\\":{\\\\\\\"description\\\\\\\":\\\\\\\"The SQL query to execute\\\\\\\",\\\\\\\"type\\\\\\\":\\\\\\\"string\\\\\\\"},\\\\\\\"verified_query_used\\\\\\\":{\\\\\\\"description\\\\\\\":\\\\\\\"Set to true if the SQL query was derived from (i.e. copied or lightly modified from) a verified query in the semantic model\\\\\\\",\\\\\\\"type\\\\\\\":\\\\\\\"boolean\\\\\\\"}},\\\\\\\"required\\\\\\\":[\\\\\\\"sql\\\\\\\"],\\\\\\\"type\\\\\\\":\\\\\\\"object\\\\\\\"}\\\"]\",\n  \"snow.ai.observability.agent.planning.tool.type\": \"[\\\"system_agentic_semantic_context\\\",\\\"system_execute_sql\\\"]\",\n  \"snow.ai.observability.agent.planning.tool_selection.argument.name\": \"[\\\"pruning_question\\\"]\",\n  \"snow.ai.observability.agent.planning.tool_selection.argument.value\": \"[\\\"\\\\\\\"How many home runs have I witnessed in person across all attended games?\\\\\\\"\\\"]\",\n  \"snow.ai.observability.agent.planning.tool_selection.description\": \"[\\\"Semantic model context tool for SQL generation against data model: query_keeping_score - Queries the Keeping Score semantic view: Wax's 178 attended MLB games (1984-2025) \u00e2\u20ac\u201d games attended, unique stadiums, home runs witnessed, runs witnessed, Hall of Famers seen, games per attendee, and a team's attended win rate.. Execute SQL on warehouse: WAX_WH.\\\\n\\\\n## How to Use This Tool\\\\n\\\\n**Step 1**: Call this tool FIRST to understand the data model before writing SQL.\\\\n\\\\n**Step 2**: Review the response which includes:\\\\n- Tables with their logical column names (dimensions, measures, time_dimensions)\\\\n- Dimensions with sample values for literal matching (use these exact values in WHERE clauses)\\\\n- Verified Queries (VQRs) - proven SQL examples that answer similar questions\\\\n- Custom Instructions - domain-specific rules you MUST follow\\\\n- SQL Best Practices - general SQL generation guidelines\\\\n\\\\n**Step 3**: Write your SQL query using the LOGICAL column and table names from the semantic model.\\\\n- Use column names from dimensions, measures, and time_dimensions\\\\n- Use logical table names (not fully qualified physical table names)\\\\n- The SQL will be automatically postprocessed to resolve to physical names\\\\n- Use sample_values from dimensions to match user-mentioned values (e.g., if user says \\\\\\\"California\\\\\\\", check sample_values for the exact format like \\\\\\\"CA\\\\\\\" or \\\\\\\"California\\\\\\\")\\\\n- If you need specific literals not in sample_values, use the system_literal_retriever tool to search for matching values\\\\n\\\\n**Step 4**: Execute your SQL using the system_execute_sql tool with the semantic_model parameter.\\\\n\\\\n## Critical Rules\\\\n- **Table Names**: Use the logical table names from the semantic model, prepended with \\\\\\\"__\\\\\\\" (e.g., \\\\\\\"__orders\\\\\\\" not the base table \\\\\\\"DATABASE.SCHEMA.ORDERS_FACT\\\\\\\")\\\\n- **Column Names**: Use column names from dimensions, measures, and time_dimensions in the semantic model\\\\n- If a VQR matches the user's question, adapt it using the column names in the semantic model\\\\n- Custom Instructions override general best practices when they conflict\\\\n- For text filtering, use ILIKE for case-insensitive matching\\\\n- Use sample_values to find exact literal values for WHERE clauses - if not found, use system_literal_retriever\\\\n\\\\n\\\\n## Covered Physical Tables\\\\nYou MUST use this tool for any question involving these physical tables \u2014 it is the required way to query them. Do not explore or guess at the schema elsewhere:\\\\n- BASEBALL.WAX_BASEBALL.FCT_ATTENDED_GAMES\\\\n- BASEBALL.WAX_BASEBALL.FCT_ATTENDED_TEAM_GAMES\\\\n- BASEBALL.WAX_BASEBALL.FCT_GAME_ATTENDEE\\\\n- BASEBALL.WAX_BASEBALL.FCT_HOF_SIGHTINGS\\\\n- BASEBALL.WAX_BASEBALL.FCT_PLAYS\\\\n\\\"]\",\n  \"snow.ai.observability.agent.planning.tool_selection.id\": \"[\\\"toolu_bdrk_017AGmcUvhX6sohR2v4wg2KV\\\"]\",\n  \"snow.ai.observability.agent.planning.tool_selection.is_client_side\": \"[false]\",\n  \"snow.ai.observability.agent.planning.tool_selection.name\": \"[\\\"query_keeping_score\\\"]\",\n  \"snow.ai.observability.agent.planning.tool_selection.type\": \"[\\\"system_agentic_semantic_context\\\"]\",\n  \"snow.ai.observability.database.id\": 480470948,\n  \"snow.ai.observability.database.name\": \"BASEBALL\",\n  \"snow.ai.observability.object.id\": 480470792,\n  \"snow.ai.observability.object.name\": \"KEEPING_SCORE_AGENT\",\n  \"snow.ai.observability.object.type\": \"Cortex Agent\",\n  \"snow.ai.observability.object.version.id\": 123000537097,\n  \"snow.ai.observability.object.version.name\": \"LIVE\",\n  \"snow.ai.observability.schema.id\": 123000523749,\n  \"snow.ai.observability.schema.name\": \"SEMANTICS\",\n  \"snow.ai.observability.span_kind\": \"1\"\n}"
+      },
+      {
+        "TIMESTAMP": "2026-09-03T15:44:30.165000",
+        "START_TIMESTAMP": "2026-09-03T15:44:30.127000",
+        "TRACE": "{\n  \"span_id\": \"87e7e3643f624213\",\n  \"trace_id\": \"01c6d390e9d03d629c037b39623edbe4\"\n}",
+        "SCOPE": "{\n  \"name\": \"snow.cortex.agent\"\n}",
+        "RECORD_TYPE": "SPAN",
+        "RECORD": "{\n  \"kind\": \"SPAN_KIND_INTERNAL\",\n  \"name\": \"SemanticContextTool_query_keeping_score\",\n  \"parent_span_id\": \"80b301120f1bfde2\",\n  \"status\": {\n    \"code\": \"STATUS_CODE_OK\"\n  }\n}",
+        "RECORD_ATTRIBUTES": "{\n  \"ai.observability.input_id\": \"640808a736324a1c652d0027b03666de\",\n  \"ai.observability.record_id\": \"519fa7f3-2059-4b46-9516-a62a9b57cd63\",\n  \"snow.ai.observability.agent.tool.id\": \"toolu_bdrk_017AGmcUvhX6sohR2v4wg2KV\",\n  \"snow.ai.observability.agent.tool.semantic_context.duration\": 37,\n  \"snow.ai.observability.agent.tool.semantic_context.error\": \"Semantic model validation failed: Invalid semantic model yaml: 400: {'error_message': 'invalid column name \\\"game_id\\\": name must start with an underscore or a letter, and only contain letters, underscores, decimal digits (0-9), and dollar signs ($).', 'error_code': '392700'}\",\n  \"snow.ai.observability.agent.tool.semantic_context.request_id\": \"519fa7f3-2059-4b46-9516-a62a9b57cd63\",\n  \"snow.ai.observability.agent.tool.semantic_context.semantic_model\": \"query_keeping_score\",\n  \"snow.ai.observability.agent.tool.semantic_context.status\": \"ERROR\",\n  \"snow.ai.observability.agent.tool.semantic_context.status.code\": \"500\",\n  \"snow.ai.observability.agent.tool.semantic_context.status.description\": \"Semantic model validation failed: Invalid semantic model yaml: 400: {'error_message': 'invalid column name \\\"game_id\\\": name must start with an underscore or a letter, and only contain letters, underscores, decimal digits (0-9), and dollar signs ($).', 'error_code': '392700'}\",\n  \"snow.ai.observability.agent.tool.semantic_context.user_question\": \"How many home runs have I witnessed in person?\",\n  \"snow.ai.observability.database.id\": 480470948,\n  \"snow.ai.observability.database.name\": \"BASEBALL\",\n  \"snow.ai.observability.object.id\": 480470792,\n  \"snow.ai.observability.object.name\": \"KEEPING_SCORE_AGENT\",\n  \"snow.ai.observability.object.type\": \"Cortex Agent\",\n  \"snow.ai.observability.object.version.id\": 123000537097,\n  \"snow.ai.observability.object.version.name\": \"LIVE\",\n  \"snow.ai.observability.schema.id\": 123000523749,\n  \"snow.ai.observability.schema.name\": \"SEMANTICS\",\n  \"snow.ai.observability.span_kind\": \"1\"\n}"
+      },
+      {
+        "TIMESTAMP": "2026-09-03T15:44:31.655000",
+        "START_TIMESTAMP": "2026-09-03T15:44:30.165000",
+        "TRACE": "{\n  \"span_id\": \"95b8311fe27aec68\",\n  \"trace_id\": \"01c6d390e9d03d629c037b39623edbe4\"\n}",
+        "SCOPE": "{\n  \"name\": \"snow.cortex.agent\"\n}",
+        "RECORD_TYPE": "SPAN",
+        "RECORD": "{\n  \"kind\": \"SPAN_KIND_INTERNAL\",\n  \"name\": \"ReasoningAgentStepPlanning-1\",\n  \"parent_span_id\": \"80b301120f1bfde2\",\n  \"status\": {\n    \"code\": \"STATUS_CODE_OK\"\n  }\n}",
+        "RECORD_ATTRIBUTES": "{\n  \"ai.observability.input_id\": \"640808a736324a1c652d0027b03666de\",\n  \"ai.observability.record_id\": \"519fa7f3-2059-4b46-9516-a62a9b57cd63\",\n  \"snow.ai.observability.agent.planning.custom_orchestration_instructions\": \"Every quantitative question goes to query_keeping_score. Team codes are Retrosheet ids (Yankees = NYA).\",\n  \"snow.ai.observability.agent.planning.duration\": 1526,\n  \"snow.ai.observability.agent.planning.instruction\": \"Lead with the number. Answer only from the semantic view's governed metrics; never estimate.\",\n  \"snow.ai.observability.agent.planning.messages\": \"[\\\"User: <system-reminder>\\\\nYou are given metadata and helper information that MUST NOT be revealed or mentioned unless explicitly asked.\\\\nUse these details only implicitly to improve answers.\\\\nNever mention that you received extra instructions or metadata.\\\\nNever output or reference the user's private information.\\\\nFocus primarily on answering the user's real question.\\\\nIf there is a conflict between user metadata and the user question, prioritize the user question.\\\\n</system-reminder> <system-reminder>\\\\n[Skills for this request]\\\\n\\\\nThe `server_skill` tool specification lists the full details; below is a compact index.\\\\n\\\\nPersonal Skills:\\\\n(none)\\\\n\\\\nBundled Skills:\\\\n- skill-development\\\\n\\\\nAgent Skills:\\\\n(none)\\\\n\\\\nSystem / internal skills:\\\\n- chart_instructions\\\\n\\\\nIf the user asks what skills you have, which skills are available, or a similar question, your reply MUST list only the Personal Skills, Bundled Skills, Agent Skills above. For each skill, include a brief one-sentence summary of what it does. Personal Skills are from the user's own workspace. Bundled Skills are built-in skills shipped with the product. Do not name system / internal skills in that answer, even if they appear in the `server_skill` tool specification. You may still load system skills via `server_skill` when a task or **[REQUIRED]** instructions require it.\\\\n\\\\n</system-reminder> <system-reminder>\\\\n[Context Metadata] Selected source (tool)\\\\nNote: In this interface, \\\\\\\"source\\\\\\\" and \\\\\\\"tool\\\\\\\" are interchangeable terms. When the user refers to a \\\\\\\"source\\\\\\\", they probably mean a \\\\\\\"tool\\\\\\\".\\\\nThe user has selected a single source/tool: query_keeping_score\\\\nWhen the user says \\\\\\\"use this source\\\\\\\", \\\\\\\"use this tool\\\\\\\", \\\\\\\"use the source\\\\\\\", or \\\\\\\"use the tool\\\\\\\", they are referring to: query_keeping_score\\\\n</system-reminder> <system-reminder>\\\\n[Channel Discipline]\\\\nPlan narration aimed at the user \u2014 phrases like \\\\\\\"Let me first\u2026\\\\\\\", \\\\\\\"I'll help you find\u2026\\\\\\\", \\\\\\\"Now I need to check\u2026\\\\\\\", \\\\\\\"Let me double-check by\u2026\\\\\\\", \\\\\\\"Let me start by\u2026\\\\\\\" \u2014 is internal reasoning, NOT user-facing answer text.\\\\n- Such narration MUST stay inside <thinking>...</thinking>.\\\\n- Do not emit it as bare text after </thinking>.\\\\n- Only emit user-facing text once you have everything you need to deliver the final answer; otherwise close </thinking> and go straight to the next tool call.\\\\n</system-reminder> How many home runs have I witnessed in person?\\\"]\",\n  \"snow.ai.observability.agent.planning.model\": \"claude-opus-4-8\",\n  \"snow.ai.observability.agent.planning.query\": \"How many home runs have I witnessed in person?\",\n  \"snow.ai.observability.agent.planning.request_id\": \"519fa7f3-2059-4b46-9516-a62a9b57cd63\",\n  \"snow.ai.observability.agent.planning.status\": \"SUCCESS\",\n  \"snow.ai.observability.agent.planning.status.code\": \"200\",\n  \"snow.ai.observability.agent.planning.step_number\": 1,\n  \"snow.ai.observability.agent.planning.token_count.cache_read_input\": 7427,\n  \"snow.ai.observability.agent.planning.token_count.cache_write_input\": 258,\n  \"snow.ai.observability.agent.planning.token_count.input\": 7687,\n  \"snow.ai.observability.agent.planning.token_count.output\": 65,\n  \"snow.ai.observability.agent.planning.token_count.plan\": 138,\n  \"snow.ai.observability.agent.planning.token_count.total\": 7752,\n  \"snow.ai.observability.agent.planning.tool.description\": \"[\\\"Semantic model context tool for SQL generation against data model: query_keeping_score - Queries the Keeping Score semantic view: Wax's 178 attended MLB games (1984-2025) \u00e2\u20ac\u201d games attended, unique stadiums, home runs witnessed, runs witnessed, Hall of Famers seen, games per attendee, and a team's attended win rate.. Execute SQL on warehouse: WAX_WH.\\\\n\\\\n## How to Use This Tool\\\\n\\\\n**Step 1**: Call this tool FIRST to understand the data model before writing SQL.\\\\n\\\\n**Step 2**: Review the response which includes:\\\\n- Tables with their logical column names (dimensions, measures, time_dimensions)\\\\n- Dimensions with sample values for literal matching (use these exact values in WHERE clauses)\\\\n- Verified Queries (VQRs) - proven SQL examples that answer similar questions\\\\n- Custom Instructions - domain-specific rules you MUST follow\\\\n- SQL Best Practices - general SQL generation guidelines\\\\n\\\\n**Step 3**: Write your SQL query using the LOGICAL column and table names from the semantic model.\\\\n- Use column names from dimensions, measures, and time_dimensions\\\\n- Use logical table names (not fully qualified physical table names)\\\\n- The SQL will be automatically postprocessed to resolve to physical names\\\\n- Use sample_values from dimensions to match user-mentioned values (e.g., if user says \\\\\\\"California\\\\\\\", check sample_values for the exact format like \\\\\\\"CA\\\\\\\" or \\\\\\\"California\\\\\\\")\\\\n- If you need specific literals not in sample_values, use the system_literal_retriever tool to search for matching values\\\\n\\\\n**Step 4**: Execute your SQL using the system_execute_sql tool with the semantic_model parameter.\\\\n\\\\n## Critical Rules\\\\n- **Table Names**: Use the logical table names from the semantic model, prepended with \\\\\\\"__\\\\\\\" (e.g., \\\\\\\"__orders\\\\\\\" not the base table \\\\\\\"DATABASE.SCHEMA.ORDERS_FACT\\\\\\\")\\\\n- **Column Names**: Use column names from dimensions, measures, and time_dimensions in the semantic model\\\\n- If a VQR matches the user's question, adapt it using the column names in the semantic model\\\\n- Custom Instructions override general best practices when they conflict\\\\n- For text filtering, use ILIKE for case-insensitive matching\\\\n- Use sample_values to find exact literal values for WHERE clauses - if not found, use system_literal_retriever\\\\n\\\\n\\\\n## Covered Physical Tables\\\\nYou MUST use this tool for any question involving these physical tables \u2014 it is the required way to query them. Do not explore or guess at the schema elsewhere:\\\\n- BASEBALL.WAX_BASEBALL.FCT_ATTENDED_GAMES\\\\n- BASEBALL.WAX_BASEBALL.FCT_ATTENDED_TEAM_GAMES\\\\n- BASEBALL.WAX_BASEBALL.FCT_GAME_ATTENDEE\\\\n- BASEBALL.WAX_BASEBALL.FCT_HOF_SIGHTINGS\\\\n- BASEBALL.WAX_BASEBALL.FCT_PLAYS\\\\n\\\",\\\"Execute SQL queries directly on the server-side with configurable result truncation and metadata return. The tool executes the SQL, waits for completion, and returns results with metadata.\\\"]\",\n  \"snow.ai.observability.agent.planning.tool.name\": \"[\\\"query_keeping_score\\\",\\\"system_execute_sql\\\"]\",\n  \"snow.ai.observability.agent.planning.tool.parameters\": \"[\\\"{\\\\\\\"properties\\\\\\\":{\\\\\\\"pruning_question\\\\\\\":{\\\\\\\"description\\\\\\\":\\\\\\\"A brief but fully formed analysis question used to prioritize what's shown when the semantic model is over the token budget. If the model is over budget (as described in the result of the tool as 'pruning note'), the verified queries and columns most relevant to this question are retained. It is ignored when the model already fits the budget, also indicated by the pruning note. If it was ignored once for a model, it will be ignored on future calls as well, so do not continue to set it if it's already been ignored. Set this the first time you call a given semantic model. If a previous call returned a pruned_note saying needed columns or verified queries are missing, refine pruning_question and call again, only once more as possibly the columns do not exist.\\\\\\\",\\\\\\\"type\\\\\\\":\\\\\\\"string\\\\\\\"}},\\\\\\\"type\\\\\\\":\\\\\\\"object\\\\\\\"}\\\",\\\"{\\\\\\\"properties\\\\\\\":{\\\\\\\"aisql_reasoning\\\\\\\":{\\\\\\\"description\\\\\\\":\\\\\\\"The reasoning behind using AISQL functionality. IMPORTANT: this should describe why AI_FILTER, AI_AGG, and AI_EXTRACT are being used.IMPORTANT: If no AISQL functionality is being used, the reasoning has to be empty.\\\\\\\",\\\\\\\"type\\\\\\\":\\\\\\\"string\\\\\\\"},\\\\\\\"error_correction\\\\\\\":{\\\\\\\"description\\\\\\\":\\\\\\\"If this call is attempting to repair or correct the SQL from a previous system_execute_sql tool use that failed, it is REQUIRED to set this to the tool_use_id of that failed call for proper tracking. Otherwise, omit or leave it empty.\\\\\\\",\\\\\\\"type\\\\\\\":\\\\\\\"string\\\\\\\"},\\\\\\\"max_result_size\\\\\\\":{\\\\\\\"description\\\\\\\":\\\\\\\"Maximum result size for truncation\\\\\\\",\\\\\\\"type\\\\\\\":\\\\\\\"integer\\\\\\\"},\\\\\\\"max_result_size_unit\\\\\\\":{\\\\\\\"description\\\\\\\":\\\\\\\"Unit for result truncation - \\\\\\\\\\\\\\\"bytes\\\\\\\\\\\\\\\" or \\\\\\\\\\\\\\\"cells\\\\\\\\\\\\\\\"\\\\\\\",\\\\\\\"type\\\\\\\":\\\\\\\"string\\\\\\\"},\\\\\\\"semantic_model\\\\\\\":{\\\\\\\"description\\\\\\\":\\\\\\\"Name of the semantic model tool to use for SQL validation and postprocessing. If you used a semantic model to generate the SQL, it is REQUIRED to set this to the name of the semantic model tool, or the SQL you write to query a semantic model will likely fail. If the semantic model you want to use is not in the list, you should not use the system_execute_sql tool.\\\\\\\",\\\\\\\"enum\\\\\\\":[\\\\\\\"query_keeping_score\\\\\\\"],\\\\\\\"type\\\\\\\":\\\\\\\"string\\\\\\\"},\\\\\\\"skill_used\\\\\\\":{\\\\\\\"description\\\\\\\":\\\\\\\"Set to the name of the skill whose instructions you are following when writing this SQL. REQUIRED on every SQL execution made as part of a skill's workflow \u2014 including probing, exploration, and validation steps, not just the final analysis. If not executing SQL based on a skill, omit.\\\\\\\",\\\\\\\"enum\\\\\\\":[\\\\\\\"chart_instructions\\\\\\\",\\\\\\\"skill-development\\\\\\\"],\\\\\\\"type\\\\\\\":\\\\\\\"string\\\\\\\"},\\\\\\\"sql\\\\\\\":{\\\\\\\"description\\\\\\\":\\\\\\\"The SQL query to execute\\\\\\\",\\\\\\\"type\\\\\\\":\\\\\\\"string\\\\\\\"},\\\\\\\"verified_query_used\\\\\\\":{\\\\\\\"description\\\\\\\":\\\\\\\"Set to true if the SQL query was derived from (i.e. copied or lightly modified from) a verified query in the semantic model\\\\\\\",\\\\\\\"type\\\\\\\":\\\\\\\"boolean\\\\\\\"}},\\\\\\\"required\\\\\\\":[\\\\\\\"sql\\\\\\\"],\\\\\\\"type\\\\\\\":\\\\\\\"object\\\\\\\"}\\\"]\",\n  \"snow.ai.observability.agent.planning.tool.type\": \"[\\\"system_agentic_semantic_context\\\",\\\"system_execute_sql\\\"]\",\n  \"snow.ai.observability.agent.planning.tool_execution.argument.name\": \"[\\\"pruning_question\\\"]\",\n  \"snow.ai.observability.agent.planning.tool_execution.argument.value\": \"[\\\"\\\\\\\"How many home runs have I witnessed in person across all attended games?\\\\\\\"\\\"]\",\n  \"snow.ai.observability.agent.planning.tool_execution.id\": \"[\\\"toolu_bdrk_017AGmcUvhX6sohR2v4wg2KV\\\"]\",\n  \"snow.ai.observability.agent.planning.tool_execution.name\": \"[\\\"query_keeping_score\\\"]\",\n  \"snow.ai.observability.agent.planning.tool_execution.results\": \"[\\\"  {\\\\\\\"error\\\\\\\":\\\\\\\"Semantic model validation failed: Invalid semantic model yaml: 400: {'error_message': 'invalid column name \\\\\\\\\\\\\\\"game_id\\\\\\\\\\\\\\\": name must start with an underscore or a letter, and only contain letters, underscores, decimal digits (0-9), and dollar signs ($).', 'error_code': '392700'}\\\\\\\",\\\\\\\"semantic_model_name\\\\\\\":\\\\\\\"\\\\\\\",\\\\\\\"sql_best_practices\\\\\\\":\\\\\\\"ERROR: The semantic model failed validation and cannot be used. Do NOT generate or execute any SQL queries for this semantic model. Report the validation error to the user.\\\\\\\"}\\\"]\",\n  \"snow.ai.observability.agent.planning.tool_execution.type\": \"[\\\"system_agentic_semantic_context\\\"]\",\n  \"snow.ai.observability.agent.planning.tool_selection.argument.name\": \"[\\\"pruning_question\\\"]\",\n  \"snow.ai.observability.agent.planning.tool_selection.argument.value\": \"[\\\"\\\\\\\"Total home runs witnessed in person\\\\\\\"\\\"]\",\n  \"snow.ai.observability.agent.planning.tool_selection.description\": \"[\\\"Semantic model context tool for SQL generation against data model: query_keeping_score - Queries the Keeping Score semantic view: Wax's 178 attended MLB games (1984-2025) \u00e2\u20ac\u201d games attended, unique stadiums, home runs witnessed, runs witnessed, Hall of Famers seen, games per attendee, and a team's attended win rate.. Execute SQL on warehouse: WAX_WH.\\\\n\\\\n## How to Use This Tool\\\\n\\\\n**Step 1**: Call this tool FIRST to understand the data model before writing SQL.\\\\n\\\\n**Step 2**: Review the response which includes:\\\\n- Tables with their logical column names (dimensions, measures, time_dimensions)\\\\n- Dimensions with sample values for literal matching (use these exact values in WHERE clauses)\\\\n- Verified Queries (VQRs) - proven SQL examples that answer similar questions\\\\n- Custom Instructions - domain-specific rules you MUST follow\\\\n- SQL Best Practices - general SQL generation guidelines\\\\n\\\\n**Step 3**: Write your SQL query using the LOGICAL column and table names from the semantic model.\\\\n- Use column names from dimensions, measures, and time_dimensions\\\\n- Use logical table names (not fully qualified physical table names)\\\\n- The SQL will be automatically postprocessed to resolve to physical names\\\\n- Use sample_values from dimensions to match user-mentioned values (e.g., if user says \\\\\\\"California\\\\\\\", check sample_values for the exact format like \\\\\\\"CA\\\\\\\" or \\\\\\\"California\\\\\\\")\\\\n- If you need specific literals not in sample_values, use the system_literal_retriever tool to search for matching values\\\\n\\\\n**Step 4**: Execute your SQL using the system_execute_sql tool with the semantic_model parameter.\\\\n\\\\n## Critical Rules\\\\n- **Table Names**: Use the logical table names from the semantic model, prepended with \\\\\\\"__\\\\\\\" (e.g., \\\\\\\"__orders\\\\\\\" not the base table \\\\\\\"DATABASE.SCHEMA.ORDERS_FACT\\\\\\\")\\\\n- **Column Names**: Use column names from dimensions, measures, and time_dimensions in the semantic model\\\\n- If a VQR matches the user's question, adapt it using the column names in the semantic model\\\\n- Custom Instructions override general best practices when they conflict\\\\n- For text filtering, use ILIKE for case-insensitive matching\\\\n- Use sample_values to find exact literal values for WHERE clauses - if not found, use system_literal_retriever\\\\n\\\\n\\\\n## Covered Physical Tables\\\\nYou MUST use this tool for any question involving these physical tables \u2014 it is the required way to query them. Do not explore or guess at the schema elsewhere:\\\\n- BASEBALL.WAX_BASEBALL.FCT_ATTENDED_GAMES\\\\n- BASEBALL.WAX_BASEBALL.FCT_ATTENDED_TEAM_GAMES\\\\n- BASEBALL.WAX_BASEBALL.FCT_GAME_ATTENDEE\\\\n- BASEBALL.WAX_BASEBALL.FCT_HOF_SIGHTINGS\\\\n- BASEBALL.WAX_BASEBALL.FCT_PLAYS\\\\n\\\"]\",\n  \"snow.ai.observability.agent.planning.tool_selection.id\": \"[\\\"toolu_bdrk_01CEfLg13vCfD1BHm61XxrqK\\\"]\",\n  \"snow.ai.observability.agent.planning.tool_selection.is_client_side\": \"[false]\",\n  \"snow.ai.observability.agent.planning.tool_selection.name\": \"[\\\"query_keeping_score\\\"]\",\n  \"snow.ai.observability.agent.planning.tool_selection.type\": \"[\\\"system_agentic_semantic_context\\\"]\",\n  \"snow.ai.observability.database.id\": 480470948,\n  \"snow.ai.observability.database.name\": \"BASEBALL\",\n  \"snow.ai.observability.object.id\": 480470792,\n  \"snow.ai.observability.object.name\": \"KEEPING_SCORE_AGENT\",\n  \"snow.ai.observability.object.type\": \"Cortex Agent\",\n  \"snow.ai.observability.object.version.id\": 123000537097,\n  \"snow.ai.observability.object.version.name\": \"LIVE\",\n  \"snow.ai.observability.schema.id\": 123000523749,\n  \"snow.ai.observability.schema.name\": \"SEMANTICS\",\n  \"snow.ai.observability.span_kind\": \"1\"\n}"
+      },
+      {
+        "TIMESTAMP": "2026-09-03T15:44:31.692000",
+        "START_TIMESTAMP": "2026-09-03T15:44:31.655000",
+        "TRACE": "{\n  \"span_id\": \"95b8311fe27aec68\",\n  \"trace_id\": \"01c6d390e9d03d629c037b39623edbe4\"\n}",
+        "SCOPE": "{\n  \"name\": \"snow.cortex.agent\"\n}",
+        "RECORD_TYPE": "SPAN",
+        "RECORD": "{\n  \"kind\": \"SPAN_KIND_INTERNAL\",\n  \"name\": \"SemanticContextTool_query_keeping_score\",\n  \"parent_span_id\": \"80b301120f1bfde2\",\n  \"status\": {\n    \"code\": \"STATUS_CODE_OK\"\n  }\n}",
+        "RECORD_ATTRIBUTES": "{\n  \"ai.observability.input_id\": \"640808a736324a1c652d0027b03666de\",\n  \"ai.observability.record_id\": \"519fa7f3-2059-4b46-9516-a62a9b57cd63\",\n  \"snow.ai.observability.agent.tool.id\": \"toolu_bdrk_01CEfLg13vCfD1BHm61XxrqK\",\n  \"snow.ai.observability.agent.tool.semantic_context.duration\": 36,\n  \"snow.ai.observability.agent.tool.semantic_context.error\": \"Semantic model validation failed: Invalid semantic model yaml: 400: {'error_message': 'invalid column name \\\"game_id\\\": name must start with an underscore or a letter, and only contain letters, underscores, decimal digits (0-9), and dollar signs ($).', 'error_code': '392700'}\",\n  \"snow.ai.observability.agent.tool.semantic_context.request_id\": \"519fa7f3-2059-4b46-9516-a62a9b57cd63\",\n  \"snow.ai.observability.agent.tool.semantic_context.semantic_model\": \"query_keeping_score\",\n  \"snow.ai.observability.agent.tool.semantic_context.status\": \"ERROR\",\n  \"snow.ai.observability.agent.tool.semantic_context.status.code\": \"500\",\n  \"snow.ai.observability.agent.tool.semantic_context.status.description\": \"Semantic model validation failed: Invalid semantic model yaml: 400: {'error_message': 'invalid column name \\\"game_id\\\": name must start with an underscore or a letter, and only contain letters, underscores, decimal digits (0-9), and dollar signs ($).', 'error_code': '392700'}\",\n  \"snow.ai.observability.agent.tool.semantic_context.user_question\": \"How many home runs have I witnessed in person?\",\n  \"snow.ai.observability.database.id\": 480470948,\n  \"snow.ai.observability.database.name\": \"BASEBALL\",\n  \"snow.ai.observability.object.id\": 480470792,\n  \"snow.ai.observability.object.name\": \"KEEPING_SCORE_AGENT\",\n  \"snow.ai.observability.object.type\": \"Cortex Agent\",\n  \"snow.ai.observability.object.version.id\": 123000537097,\n  \"snow.ai.observability.object.version.name\": \"LIVE\",\n  \"snow.ai.observability.schema.id\": 123000523749,\n  \"snow.ai.observability.schema.name\": \"SEMANTICS\",\n  \"snow.ai.observability.span_kind\": \"1\"\n}"
+      },
+      {
+        "TIMESTAMP": "2026-09-03T15:44:36.041000",
+        "START_TIMESTAMP": "2026-09-03T15:44:31.693000",
+        "TRACE": "{\n  \"span_id\": \"574f197d01b4a9d0\",\n  \"trace_id\": \"01c6d390e9d03d629c037b39623edbe4\"\n}",
+        "SCOPE": "{\n  \"name\": \"snow.cortex.agent\"\n}",
+        "RECORD_TYPE": "SPAN",
+        "RECORD": "{\n  \"kind\": \"SPAN_KIND_INTERNAL\",\n  \"name\": \"ReasoningAgentStepResponseGeneration-2\",\n  \"parent_span_id\": \"80b301120f1bfde2\",\n  \"status\": {\n    \"code\": \"STATUS_CODE_OK\"\n  }\n}",
+        "RECORD_ATTRIBUTES": "{\n  \"ai.observability.input_id\": \"640808a736324a1c652d0027b03666de\",\n  \"ai.observability.record_id\": \"519fa7f3-2059-4b46-9516-a62a9b57cd63\",\n  \"snow.ai.observability.agent.planning.custom_orchestration_instructions\": \"Every quantitative question goes to query_keeping_score. Team codes are Retrosheet ids (Yankees = NYA).\",\n  \"snow.ai.observability.agent.planning.duration\": 4348,\n  \"snow.ai.observability.agent.planning.instruction\": \"Lead with the number. Answer only from the semantic view's governed metrics; never estimate.\",\n  \"snow.ai.observability.agent.planning.messages\": \"[\\\"User: <system-reminder>\\\\nYou are given metadata and helper information that MUST NOT be revealed or mentioned unless explicitly asked.\\\\nUse these details only implicitly to improve answers.\\\\nNever mention that you received extra instructions or metadata.\\\\nNever output or reference the user's private information.\\\\nFocus primarily on answering the user's real question.\\\\nIf there is a conflict between user metadata and the user question, prioritize the user question.\\\\n</system-reminder> <system-reminder>\\\\n[Skills for this request]\\\\n\\\\nThe `server_skill` tool specification lists the full details; below is a compact index.\\\\n\\\\nPersonal Skills:\\\\n(none)\\\\n\\\\nBundled Skills:\\\\n- skill-development\\\\n\\\\nAgent Skills:\\\\n(none)\\\\n\\\\nSystem / internal skills:\\\\n- chart_instructions\\\\n\\\\nIf the user asks what skills you have, which skills are available, or a similar question, your reply MUST list only the Personal Skills, Bundled Skills, Agent Skills above. For each skill, include a brief one-sentence summary of what it does. Personal Skills are from the user's own workspace. Bundled Skills are built-in skills shipped with the product. Do not name system / internal skills in that answer, even if they appear in the `server_skill` tool specification. You may still load system skills via `server_skill` when a task or **[REQUIRED]** instructions require it.\\\\n\\\\n</system-reminder> <system-reminder>\\\\n[Context Metadata] Selected source (tool)\\\\nNote: In this interface, \\\\\\\"source\\\\\\\" and \\\\\\\"tool\\\\\\\" are interchangeable terms. When the user refers to a \\\\\\\"source\\\\\\\", they probably mean a \\\\\\\"tool\\\\\\\".\\\\nThe user has selected a single source/tool: query_keeping_score\\\\nWhen the user says \\\\\\\"use this source\\\\\\\", \\\\\\\"use this tool\\\\\\\", \\\\\\\"use the source\\\\\\\", or \\\\\\\"use the tool\\\\\\\", they are referring to: query_keeping_score\\\\n</system-reminder> <system-reminder>\\\\n[Channel Discipline]\\\\nPlan narration aimed at the user \u2014 phrases like \\\\\\\"Let me first\u2026\\\\\\\", \\\\\\\"I'll help you find\u2026\\\\\\\", \\\\\\\"Now I need to check\u2026\\\\\\\", \\\\\\\"Let me double-check by\u2026\\\\\\\", \\\\\\\"Let me start by\u2026\\\\\\\" \u2014 is internal reasoning, NOT user-facing answer text.\\\\n- Such narration MUST stay inside <thinking>...</thinking>.\\\\n- Do not emit it as bare text after </thinking>.\\\\n- Only emit user-facing text once you have everything you need to deliver the final answer; otherwise close </thinking> and go straight to the next tool call.\\\\n</system-reminder> How many home runs have I witnessed in person?\\\"]\",\n  \"snow.ai.observability.agent.planning.model\": \"claude-opus-4-8\",\n  \"snow.ai.observability.agent.planning.query\": \"How many home runs have I witnessed in person?\",\n  \"snow.ai.observability.agent.planning.request_id\": \"519fa7f3-2059-4b46-9516-a62a9b57cd63\",\n  \"snow.ai.observability.agent.planning.response\": \"I'm unable to answer this right now. The Keeping Score semantic view is currently failing validation due to a configuration issue in its underlying model (an invalid column name, `game_id`, that doesn't meet naming requirements). Because of this error, I can't run any queries against it to retrieve your home run count.\\n\\nThis needs to be fixed in the semantic model definition before I can pull governed metrics like home runs witnessed. Once the model is corrected, I'd be happy to get you that number.\",\n  \"snow.ai.observability.agent.planning.status\": \"SUCCESS\",\n  \"snow.ai.observability.agent.planning.status.code\": \"200\",\n  \"snow.ai.observability.agent.planning.step_number\": 2,\n  \"snow.ai.observability.agent.planning.thinking_response\": \"The semantic model is failing validation. I cannot use it. I should report the error to the user honestly.\",\n  \"snow.ai.observability.agent.planning.token_count.cache_read_input\": 7685,\n  \"snow.ai.observability.agent.planning.token_count.cache_write_input\": 250,\n  \"snow.ai.observability.agent.planning.token_count.input\": 7937,\n  \"snow.ai.observability.agent.planning.token_count.output\": 195,\n  \"snow.ai.observability.agent.planning.token_count.plan\": 333,\n  \"snow.ai.observability.agent.planning.token_count.total\": 8132,\n  \"snow.ai.observability.agent.planning.tool.description\": \"[\\\"Semantic model context tool for SQL generation against data model: query_keeping_score - Queries the Keeping Score semantic view: Wax's 178 attended MLB games (1984-2025) \u00e2\u20ac\u201d games attended, unique stadiums, home runs witnessed, runs witnessed, Hall of Famers seen, games per attendee, and a team's attended win rate.. Execute SQL on warehouse: WAX_WH.\\\\n\\\\n## How to Use This Tool\\\\n\\\\n**Step 1**: Call this tool FIRST to understand the data model before writing SQL.\\\\n\\\\n**Step 2**: Review the response which includes:\\\\n- Tables with their logical column names (dimensions, measures, time_dimensions)\\\\n- Dimensions with sample values for literal matching (use these exact values in WHERE clauses)\\\\n- Verified Queries (VQRs) - proven SQL examples that answer similar questions\\\\n- Custom Instructions - domain-specific rules you MUST follow\\\\n- SQL Best Practices - general SQL generation guidelines\\\\n\\\\n**Step 3**: Write your SQL query using the LOGICAL column and table names from the semantic model.\\\\n- Use column names from dimensions, measures, and time_dimensions\\\\n- Use logical table names (not fully qualified physical table names)\\\\n- The SQL will be automatically postprocessed to resolve to physical names\\\\n- Use sample_values from dimensions to match user-mentioned values (e.g., if user says \\\\\\\"California\\\\\\\", check sample_values for the exact format like \\\\\\\"CA\\\\\\\" or \\\\\\\"California\\\\\\\")\\\\n- If you need specific literals not in sample_values, use the system_literal_retriever tool to search for matching values\\\\n\\\\n**Step 4**: Execute your SQL using the system_execute_sql tool with the semantic_model parameter.\\\\n\\\\n## Critical Rules\\\\n- **Table Names**: Use the logical table names from the semantic model, prepended with \\\\\\\"__\\\\\\\" (e.g., \\\\\\\"__orders\\\\\\\" not the base table \\\\\\\"DATABASE.SCHEMA.ORDERS_FACT\\\\\\\")\\\\n- **Column Names**: Use column names from dimensions, measures, and time_dimensions in the semantic model\\\\n- If a VQR matches the user's question, adapt it using the column names in the semantic model\\\\n- Custom Instructions override general best practices when they conflict\\\\n- For text filtering, use ILIKE for case-insensitive matching\\\\n- Use sample_values to find exact literal values for WHERE clauses - if not found, use system_literal_retriever\\\\n\\\\n\\\\n## Covered Physical Tables\\\\nYou MUST use this tool for any question involving these physical tables \u2014 it is the required way to query them. Do not explore or guess at the schema elsewhere:\\\\n- BASEBALL.WAX_BASEBALL.FCT_ATTENDED_GAMES\\\\n- BASEBALL.WAX_BASEBALL.FCT_ATTENDED_TEAM_GAMES\\\\n- BASEBALL.WAX_BASEBALL.FCT_GAME_ATTENDEE\\\\n- BASEBALL.WAX_BASEBALL.FCT_HOF_SIGHTINGS\\\\n- BASEBALL.WAX_BASEBALL.FCT_PLAYS\\\\n\\\",\\\"Execute SQL queries directly on the server-side with configurable result truncation and metadata return. The tool executes the SQL, waits for completion, and returns results with metadata.\\\"]\",\n  \"snow.ai.observability.agent.planning.tool.name\": \"[\\\"query_keeping_score\\\",\\\"system_execute_sql\\\"]\",\n  \"snow.ai.observability.agent.planning.tool.parameters\": \"[\\\"{\\\\\\\"properties\\\\\\\":{\\\\\\\"pruning_question\\\\\\\":{\\\\\\\"description\\\\\\\":\\\\\\\"A brief but fully formed analysis question used to prioritize what's shown when the semantic model is over the token budget. If the model is over budget (as described in the result of the tool as 'pruning note'), the verified queries and columns most relevant to this question are retained. It is ignored when the model already fits the budget, also indicated by the pruning note. If it was ignored once for a model, it will be ignored on future calls as well, so do not continue to set it if it's already been ignored. Set this the first time you call a given semantic model. If a previous call returned a pruned_note saying needed columns or verified queries are missing, refine pruning_question and call again, only once more as possibly the columns do not exist.\\\\\\\",\\\\\\\"type\\\\\\\":\\\\\\\"string\\\\\\\"}},\\\\\\\"type\\\\\\\":\\\\\\\"object\\\\\\\"}\\\",\\\"{\\\\\\\"properties\\\\\\\":{\\\\\\\"aisql_reasoning\\\\\\\":{\\\\\\\"description\\\\\\\":\\\\\\\"The reasoning behind using AISQL functionality. IMPORTANT: this should describe why AI_FILTER, AI_AGG, and AI_EXTRACT are being used.IMPORTANT: If no AISQL functionality is being used, the reasoning has to be empty.\\\\\\\",\\\\\\\"type\\\\\\\":\\\\\\\"string\\\\\\\"},\\\\\\\"error_correction\\\\\\\":{\\\\\\\"description\\\\\\\":\\\\\\\"If this call is attempting to repair or correct the SQL from a previous system_execute_sql tool use that failed, it is REQUIRED to set this to the tool_use_id of that failed call for proper tracking. Otherwise, omit or leave it empty.\\\\\\\",\\\\\\\"type\\\\\\\":\\\\\\\"string\\\\\\\"},\\\\\\\"max_result_size\\\\\\\":{\\\\\\\"description\\\\\\\":\\\\\\\"Maximum result size for truncation\\\\\\\",\\\\\\\"type\\\\\\\":\\\\\\\"integer\\\\\\\"},\\\\\\\"max_result_size_unit\\\\\\\":{\\\\\\\"description\\\\\\\":\\\\\\\"Unit for result truncation - \\\\\\\\\\\\\\\"bytes\\\\\\\\\\\\\\\" or \\\\\\\\\\\\\\\"cells\\\\\\\\\\\\\\\"\\\\\\\",\\\\\\\"type\\\\\\\":\\\\\\\"string\\\\\\\"},\\\\\\\"semantic_model\\\\\\\":{\\\\\\\"description\\\\\\\":\\\\\\\"Name of the semantic model tool to use for SQL validation and postprocessing. If you used a semantic model to generate the SQL, it is REQUIRED to set this to the name of the semantic model tool, or the SQL you write to query a semantic model will likely fail. If the semantic model you want to use is not in the list, you should not use the system_execute_sql tool.\\\\\\\",\\\\\\\"enum\\\\\\\":[\\\\\\\"query_keeping_score\\\\\\\"],\\\\\\\"type\\\\\\\":\\\\\\\"string\\\\\\\"},\\\\\\\"skill_used\\\\\\\":{\\\\\\\"description\\\\\\\":\\\\\\\"Set to the name of the skill whose instructions you are following when writing this SQL. REQUIRED on every SQL execution made as part of a skill's workflow \u2014 including probing, exploration, and validation steps, not just the final analysis. If not executing SQL based on a skill, omit.\\\\\\\",\\\\\\\"enum\\\\\\\":[\\\\\\\"chart_instructions\\\\\\\",\\\\\\\"skill-development\\\\\\\"],\\\\\\\"type\\\\\\\":\\\\\\\"string\\\\\\\"},\\\\\\\"sql\\\\\\\":{\\\\\\\"description\\\\\\\":\\\\\\\"The SQL query to execute\\\\\\\",\\\\\\\"type\\\\\\\":\\\\\\\"string\\\\\\\"},\\\\\\\"verified_query_used\\\\\\\":{\\\\\\\"description\\\\\\\":\\\\\\\"Set to true if the SQL query was derived from (i.e. copied or lightly modified from) a verified query in the semantic model\\\\\\\",\\\\\\\"type\\\\\\\":\\\\\\\"boolean\\\\\\\"}},\\\\\\\"required\\\\\\\":[\\\\\\\"sql\\\\\\\"],\\\\\\\"type\\\\\\\":\\\\\\\"object\\\\\\\"}\\\"]\",\n  \"snow.ai.observability.agent.planning.tool.type\": \"[\\\"system_agentic_semantic_context\\\",\\\"system_execute_sql\\\"]\",\n  \"snow.ai.observability.agent.planning.tool_execution.argument.name\": \"[\\\"pruning_question\\\",\\\"pruning_question\\\"]\",\n  \"snow.ai.observability.agent.planning.tool_execution.argument.value\": \"[\\\"\\\\\\\"How many home runs have I witnessed in person across all attended games?\\\\\\\"\\\",\\\"\\\\\\\"Total home runs witnessed in person\\\\\\\"\\\"]\",\n  \"snow.ai.observability.agent.planning.tool_execution.id\": \"[\\\"toolu_bdrk_017AGmcUvhX6sohR2v4wg2KV\\\",\\\"toolu_bdrk_01CEfLg13vCfD1BHm61XxrqK\\\"]\",\n  \"snow.ai.observability.agent.planning.tool_execution.name\": \"[\\\"query_keeping_score\\\",\\\"query_keeping_score\\\"]\",\n  \"snow.ai.observability.agent.planning.tool_execution.results\": \"[\\\"  {\\\\\\\"error\\\\\\\":\\\\\\\"Semantic model validation failed: Invalid semantic model yaml: 400: {'error_message': 'invalid column name \\\\\\\\\\\\\\\"game_id\\\\\\\\\\\\\\\": name must start with an underscore or a letter, and only contain letters, underscores, decimal digits (0-9), and dollar signs ($).', 'error_code': '392700'}\\\\\\\",\\\\\\\"semantic_model_name\\\\\\\":\\\\\\\"\\\\\\\",\\\\\\\"sql_best_practices\\\\\\\":\\\\\\\"ERROR: The semantic model failed validation and cannot be used. Do NOT generate or execute any SQL queries for this semantic model. Report the validation error to the user.\\\\\\\"}\\\",\\\"  {\\\\\\\"error\\\\\\\":\\\\\\\"Semantic model validation failed: Invalid semantic model yaml: 400: {'error_message': 'invalid column name \\\\\\\\\\\\\\\"game_id\\\\\\\\\\\\\\\": name must start with an underscore or a letter, and only contain letters, underscores, decimal digits (0-9), and dollar signs ($).', 'error_code': '392700'}\\\\\\\",\\\\\\\"semantic_model_name\\\\\\\":\\\\\\\"\\\\\\\",\\\\\\\"sql_best_practices\\\\\\\":\\\\\\\"ERROR: The semantic model failed validation and cannot be used. Do NOT generate or execute any SQL queries for this semantic model. Report the validation error to the user.\\\\\\\"}\\\"]\",\n  \"snow.ai.observability.agent.planning.tool_execution.type\": \"[\\\"system_agentic_semantic_context\\\",\\\"system_agentic_semantic_context\\\"]\",\n  \"snow.ai.observability.database.id\": 480470948,\n  \"snow.ai.observability.database.name\": \"BASEBALL\",\n  \"snow.ai.observability.object.id\": 480470792,\n  \"snow.ai.observability.object.name\": \"KEEPING_SCORE_AGENT\",\n  \"snow.ai.observability.object.type\": \"Cortex Agent\",\n  \"snow.ai.observability.object.version.id\": 123000537097,\n  \"snow.ai.observability.object.version.name\": \"LIVE\",\n  \"snow.ai.observability.schema.id\": 123000523749,\n  \"snow.ai.observability.schema.name\": \"SEMANTICS\",\n  \"snow.ai.observability.span_kind\": \"1\"\n}"
+      },
+      {
+        "TIMESTAMP": "2026-09-03T15:44:27.441000",
+        "START_TIMESTAMP": null,
+        "TRACE": null,
+        "SCOPE": "{\n  \"name\": \"snow.cortex.agent\"\n}",
+        "RECORD_TYPE": "EVENT",
+        "RECORD": "{\n  \"name\": \"CORTEX_AGENT_REQUEST\"\n}",
+        "RECORD_ATTRIBUTES": "{\n  \"ai.observability.input_id\": \"640808a736324a1c652d0027b03666de\",\n  \"ai.observability.record_id\": \"519fa7f3-2059-4b46-9516-a62a9b57cd63\",\n  \"snow.ai.observability.agent.parent_message_id\": 0,\n  \"snow.ai.observability.database.id\": 480470948,\n  \"snow.ai.observability.database.name\": \"BASEBALL\",\n  \"snow.ai.observability.object.id\": 480470792,\n  \"snow.ai.observability.object.name\": \"KEEPING_SCORE_AGENT\",\n  \"snow.ai.observability.object.type\": \"Cortex Agent\",\n  \"snow.ai.observability.object.version.id\": 123000537097,\n  \"snow.ai.observability.object.version.name\": \"LIVE\",\n  \"snow.ai.observability.role.id\": 123000521685,\n  \"snow.ai.observability.role.name\": \"ACCOUNTADMIN\",\n  \"snow.ai.observability.schema.id\": 123000523749,\n  \"snow.ai.observability.schema.name\": \"SEMANTICS\",\n  \"snow.ai.observability.session.id\": 8060962130665486,\n  \"snow.ai.observability.token_count.cache_read_input\": 23047,\n  \"snow.ai.observability.token_count.cache_write_input\": 10339,\n  \"snow.ai.observability.token_count.input\": 33394,\n  \"snow.ai.observability.token_count.output\": 342,\n  \"snow.ai.observability.token_count.total\": 33736,\n  \"snow.ai.observability.user.id\": 480470948,\n  \"snow.ai.observability.user.name\": \"WAX\"\n}"
+      }
+    ],
+    "error": null
+  },
+  "error": null
+}

@@ -469,6 +469,167 @@ def databricks_genie_cell(traces: list[dict[str, Any]]) -> dict[str, Any] | None
     }
 
 
+# ----------------------------------------------------------------------------- snowflake cortex agent · capture_snowflake_cortex_agent.py traces
+
+def _span_name(row: dict[str, Any]) -> str:
+    rec = row.get("RECORD")
+    rec = json.loads(rec) if isinstance(rec, str) else (rec or {})
+    return rec.get("name", "")
+
+
+def _span_attrs(row: dict[str, Any]) -> dict[str, Any]:
+    a = row.get("RECORD_ATTRIBUTES")
+    return json.loads(a) if isinstance(a, str) else (a or {})
+
+
+def parse_snowflake_cortex_trace(path: pathlib.Path) -> dict[str, Any]:
+    """One `capture_snowflake_cortex_agent.py --trace-out` file = one agent:run —
+    the client-observed SSE stream (wall-clock-stamped at receipt) AND the spans
+    Snowflake wrote to SNOWFLAKE.LOCAL.AI_OBSERVABILITY_EVENTS for the same
+    request_id. Two sources, reconciled below."""
+    d = json.loads(path.read_text(encoding="utf-8"))
+    ev = d["events"]
+    tool_uses = [e for e in ev if e["event"] == "response.tool_use"]
+    tool_results = [e for e in ev if e["event"] == "response.tool_result"]
+    statuses = [e["data"].get("status") for e in ev if e["event"] == "response.status"]
+    thinking = [e["data"].get("text", "") for e in ev if e["event"] == "response.thinking"]
+    texts = [e["data"].get("text", "") for e in ev if e["event"] == "response.text"]
+    final = d.get("final") or {}
+    usage = ((final.get("metadata") or {}).get("usage") or {}).get("tokens_consumed") or []
+    sqls = [
+        {"at_ms": e["at_ms"], "sql": e["data"].get("input", {}).get("sql")}
+        for e in tool_uses if e["data"].get("name") == "system_execute_sql"
+    ]
+    # stream-side error inside a 'success'-status tool_result (run 1's shape) or a
+    # real status=error (run 2's first SQL attempt)
+    errored = []
+    for e in tool_results:
+        dat = e["data"]
+        content = json.dumps(dat.get("content"))
+        if dat.get("status") == "error" or '"error"' in content:
+            errored.append({"at_ms": e["at_ms"], "name": dat.get("name"), "status": dat.get("status"),
+                            "excerpt": content[:240]})
+    rows = (d.get("event_table") or {}).get("rows") or []
+    spans = [{"name": _span_name(r), "start": r.get("START_TIMESTAMP"), "end": r.get("TIMESTAMP"),
+              "type": r.get("RECORD_TYPE"), "attrs": _span_attrs(r)} for r in rows]
+    span_names = [s["name"] for s in spans]
+    stream_tool_calls = len(tool_uses)
+    table_tool_spans = sum(1 for n in span_names if n.startswith(("SemanticContextTool", "SystemExecuteSQLTool")))
+    table_planning_spans = sum(1 for n in span_names if n.startswith("ReasoningAgentStep"))
+    return {
+        "file": path.name,
+        "agent": d["agent"],
+        "question": d["question"],
+        "request_id": d.get("request_id"),
+        "http_status": d.get("http_status"),
+        "wall_clock_ms": d["wall_clock_ms"],
+        "n_events": len(ev),
+        "statuses": statuses,
+        "thinking": thinking,
+        "final_text": texts[-1] if texts else "",
+        "tool_calls": [{"at_ms": e["at_ms"], "name": e["data"].get("name"), "input": e["data"].get("input")} for e in tool_uses],
+        "sqls": sqls,
+        "errored": errored,
+        "usage": usage,
+        "spans": spans,
+        "reconcile": {
+            "stream_tool_calls": stream_tool_calls,
+            "table_tool_spans": table_tool_spans,
+            "table_planning_spans": table_planning_spans,
+            "table_rows": len(rows),
+            "request_id_in_table": any(a.get("request_id") == d.get("request_id") for a in (s["attrs"] for s in spans)),
+        },
+        # The reference must appear in the ANSWER or a successful SQL result — not
+        # anywhere in the payload: the semantic-context tool returns the metric
+        # comments ("Parity: 400."), which would make a failed run look answered.
+        "has_reference": REFERENCE in (texts[-1] if texts else "") or any(
+            e["data"].get("name") == "system_execute_sql" and e["data"].get("status") == "success"
+            and REFERENCE in json.dumps(e["data"].get("content"))
+            for e in tool_results
+        ),
+        "is_g2": "home run" in d["question"].lower(),
+    }
+
+
+def snowflake_cortex_cell(traces: list[dict[str, Any]]) -> dict[str, Any] | None:
+    good = next((t for t in traces if t["is_g2"] and t["has_reference"]), None)
+    if good is None:
+        return None
+    failed = next((t for t in traces if t["is_g2"] and not t["has_reference"] and t["http_status"] == 200), None)
+
+    def _flat(s: str) -> str:
+        return " ".join((s or "").split())
+
+    u = good["usage"][0] if good["usage"] else {}
+    rc = good["reconcile"]
+    sql_ok = next((s for s in reversed(good["sqls"]) if s["sql"]), {})
+    err = good["errored"][0] if good["errored"] else None
+    planning_ms = [a.get("snow.ai.observability.agent.planning.duration") for s in good["spans"]
+                   for a in [s["attrs"]] if "planning.duration" in json.dumps(list(a.keys()))]
+    thinking_note = (
+        f"{len(good['thinking'])} `response.thinking` block(s)" if good["thinking"]
+        else "no `response.thinking` on the successful run (the failed run 1 *did* think aloud: "
+             "\"The semantic model is failing validation. I cannot use it…\")"
+    )
+    return {
+        "surface": "Snowflake Cortex Agent",
+        "agent": f"`{good['agent']}` (SQL-created) over the `KEEPING_SCORE` semantic view — `capture_snowflake_cortex_agent.py`",
+        "status": "measured",
+        "cells": {
+            "plan/reasoning": (
+                f"**a status ladder with named phases, plus thinking when it has something to say.** "
+                f"{len(good['statuses'])} `response.status` events "
+                f"({' → '.join(dict.fromkeys(good['statuses']))}) — the loop is legible as "
+                f"planning → extracting_tool_calls → executing_tools → reasoning_agent_stop → reevaluating_plan, "
+                f"repeated per tool call ({rc['stream_tool_calls']} calls this run). {thinking_note}."
+            ),
+            "tool-or-SQL": (
+                f"**tool AND SQL, and the SQL's first attempt failed in the open.** Tool 1 `query_keeping_score` "
+                f"(Cortex Analyst semantic context) → then `system_execute_sql` twice: "
+                f"`` {_flat(good['sqls'][0]['sql']) if good['sqls'] else '—'} `` → **`status=error`** → "
+                f"re-planned → `` {_flat(sql_ok.get('sql'))} `` → 400. The retry re-derives the metric's own "
+                f"definition (event_code 23) instead of calling the governed metric by name — the one surface "
+                f"where the agent hand-rolls SQL *over* a semantic layer it could have queried directly."
+            ),
+            "grounding source": (
+                f"**named twice, and self-checkable against the platform's own table.** The tool binds to "
+                f"`BASEBALL.SEMANTICS.KEEPING_SCORE` by definition; the event table's `Agent` span carries "
+                f"`snow.ai.observability.object.name = KEEPING_SCORE_AGENT` and the "
+                f"`AgentV2RequestResponseInfo` span carries the literal input and output text. **Reconciled:** "
+                f"request_id `{good['request_id']}` present in the table = {rc['request_id_in_table']}; "
+                f"stream saw {rc['stream_tool_calls']} tool calls, the table wrote {rc['table_tool_spans']} tool spans "
+                f"and {rc['table_planning_spans']} reasoning-step spans ({rc['table_rows']} rows) — the two sources agree "
+                f"on the shape of the run."
+            ),
+            "tokens + latency": (
+                f"**both, and from the platform this time.** `metadata.usage.tokens_consumed`: model "
+                f"`{u.get('model_name')}` (under `orchestration: auto`), {u.get('input_tokens', {}).get('total')} in "
+                f"({u.get('input_tokens', {}).get('cache_read')} cache-read), {u.get('output_tokens', {}).get('total')} out, "
+                f"{u.get('context_window')} context window — that's the stream's *total*. **The event table goes "
+                f"further than any other surface's platform-side record:** per reasoning step it carries "
+                f"`planning.model`, `planning.token_count.cache_read_input/cache_write_input/…`, `planning.duration` "
+                f"({planning_ms} ms), and per SQL call `final_sql`, `query_id`, `warehouse`, `status.code`, "
+                f"`duration`; the root span carries `agent.duration` and the platform's own latency verdict "
+                f"(`agent.status.description`). The first surface whose per-step timing *and* per-step tokens come "
+                f"from the platform, not the capture script (stream turn {good['wall_clock_ms']} ms at receipt)."
+            ),
+            "retrieval path": (
+                "**REST SSE stream + a SQL-queryable event table, no setup — as the docs claimed, and it held.** "
+                "`POST …/agents/{name}:run` with key-pair JWT (MFA-enforced account), `Accept: text/event-stream`; "
+                "then `SELECT … FROM SNOWFLAKE.LOCAL.AI_OBSERVABILITY_EVENTS` for scope `snow.cortex.agent`. "
+                "**Agent creation is one SQL statement** (`CREATE AGENT … FROM SPECIFICATION`) — no UI step, unlike "
+                "Databricks Genie. **Measured caveat:** the semantic view had to be rebuilt first — Cortex Analyst "
+                "rejects quoted-lowercase physical columns (error 392700) that plain `SEMANTIC_VIEW()` SQL accepts; "
+                + (f"run 1 (`{failed['file']}`) is kept as the receipt: the tool_result said `status=success` while its "
+                   f"content carried the validation error, the event table's `semantic_context.error` attribute carried "
+                   f"the same string, and the agent answered honestly that it could not query."
+                   if failed else "")
+            ),
+        },
+        "evidence": {"g2": good, "failed": failed, "traces": traces},
+    }
+
+
 # ----------------------------------------------------------------------------- rubric derivation
 
 def agentforce_cell(sessions: list[dict[str, Any]], runs: list[dict[str, Any]]) -> dict[str, Any] | None:
@@ -593,7 +754,8 @@ def observability_findings(sessions: list[dict[str, Any]]) -> list[dict[str, Any
 
 def render(cell_rows: list[dict[str, Any]], af: dict[str, Any] | None,
            sdk: dict[str, Any] | None, bq: dict[str, Any] | None,
-           dbx: dict[str, Any] | None, findings: list[dict[str, Any]]) -> str:
+           dbx: dict[str, Any] | None, snow: dict[str, Any] | None,
+           findings: list[dict[str, Any]]) -> str:
     stamp = datetime.date.today().isoformat()
     lines = [
         "# Observability receipts — Keeping Score",
@@ -765,6 +927,65 @@ def render(cell_rows: list[dict[str, Any]], af: dict[str, Any] | None,
             "",
         ]
 
+    if snow:
+        g2 = snow["evidence"]["g2"]
+        failed = snow["evidence"]["failed"]
+        rc = g2["reconcile"]
+
+        def _flat4(s: str) -> str:
+            return " ".join((s or "").split())
+
+        lines += [
+            "## Snowflake Cortex Agent — the cell with two sources, from the stream and the event table",
+            "",
+            f"Agent `{g2['agent']}` (created by SQL), run `{g2['file']}`, request_id `{g2['request_id']}` — "
+            f"`observability/traces/snowflake_cortex/{g2['file']}`.",
+            "",
+            "| Step shape | Value |",
+            "|---|---|",
+            f"| User | {g2['question']} |",
+            f"| SSE events | {g2['n_events']} |",
+            f"| Status phases (deduped, in order) | {' → '.join(dict.fromkeys(g2['statuses']))} |",
+            f"| Tool calls (stream) | " + " → ".join(f"`{t['name']}`" for t in g2["tool_calls"]) + " |",
+            f"| SQL attempts | " + " → ".join(
+                f"`` {_flat4(s['sql'])} ``" for s in g2["sqls"]) + " |",
+            f"| Tool errors mid-run | " + ("; ".join(f"`{e['name']}` {e['status']} at {e['at_ms']}ms" for e in g2["errored"]) or "none") + " |",
+            f"| Usage | " + "; ".join(
+                f"{u.get('model_name')}: {u.get('input_tokens', {}).get('total')} in / {u.get('output_tokens', {}).get('total')} out"
+                for u in g2["usage"]) + " |",
+            f"| wall_clock_ms | {g2['wall_clock_ms']} |",
+            f"| Final | {g2['final_text']} |",
+            f"| Reference {REFERENCE} in trace | {'✅' if g2['has_reference'] else '❌'} |",
+            "",
+            "**Reconciliation — stream vs `SNOWFLAKE.LOCAL.AI_OBSERVABILITY_EVENTS`:**",
+            "",
+            "| Check | Stream | Event table |",
+            "|---|---|---|",
+            f"| request_id matches | `{g2['request_id']}` | {'✅ present' if rc['request_id_in_table'] else '❌ absent'} |",
+            f"| tool calls | {rc['stream_tool_calls']} | {rc['table_tool_spans']} tool spans |",
+            f"| reasoning steps | {g2['statuses'].count('planning')} `planning` phases | {rc['table_planning_spans']} `ReasoningAgentStep*` spans |",
+            f"| rows written by the platform | — | {rc['table_rows']} |",
+            "",
+            "Server-side spans (start → end, from the platform, not the capture script):",
+            "",
+            "| Span | Start | End |",
+            "|---|---|---|",
+        ]
+        for s in g2["spans"]:
+            lines.append(f"| `{s['name']}` | {s['start']} | {s['end']} |")
+        lines.append("")
+        if failed:
+            frc = failed["reconcile"]
+            lines += [
+                f"**Run 1 kept as a receipt — `{failed['file']}`:** the semantic view failed Cortex Analyst validation "
+                f"(quoted-lowercase columns, error 392700) while plain `SEMANTIC_VIEW()` SQL read it fine. The agent "
+                f"called the tool {frc['stream_tool_calls']}×, each `tool_result` said `status=success` with the error "
+                f"in its content, the event table wrote {frc['table_rows']} rows carrying the same error string, and the "
+                f"agent answered honestly that it could not query. Fixed by unquoted views "
+                f"(`wax_baseball_snowflake/sql/15_parity_views_unquoted.sql`, generated).",
+                "",
+            ]
+
     if findings:
         lines += [
             "## Observability findings — what the trace caught that the prose hid",
@@ -813,6 +1034,10 @@ def main() -> None:
     dbx_traces = [parse_databricks_genie_trace(p) for p in sorted(dbx_dir.glob("*.json"))] if dbx_dir.exists() else []
     dbx = databricks_genie_cell(dbx_traces)
 
+    snow_dir = TRACES / "snowflake_cortex"
+    snow_traces = [parse_snowflake_cortex_trace(p) for p in sorted(snow_dir.glob("*.json"))] if snow_dir.exists() else []
+    snow = snowflake_cortex_cell(snow_traces)
+
     rows: list[dict[str, Any]] = []
     if af:
         rows.append(af)
@@ -822,11 +1047,13 @@ def main() -> None:
         rows.append(bq)
     if dbx:
         rows.append(dbx)
+    if snow:
+        rows.append(snow)
     measured_names = {r["surface"].lower() for r in rows}
     rows += [r for r in read_cells() if r["surface"].lower() not in measured_names]
 
     findings = observability_findings(sessions)
-    RECEIPT_PATH.write_text(render(rows, af, sdk, bq, dbx, findings), encoding="utf-8")
+    RECEIPT_PATH.write_text(render(rows, af, sdk, bq, dbx, snow, findings), encoding="utf-8")
     print(f"wrote {RECEIPT_PATH}  ({sum(1 for r in rows if r['status']=='measured')}/{len(rows)} measured, "
           f"{len(findings)} finding(s))")
     for fnd in findings:
