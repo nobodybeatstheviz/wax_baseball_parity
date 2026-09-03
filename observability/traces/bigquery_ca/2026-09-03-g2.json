@@ -1,0 +1,175 @@
+{
+  "captured_at": "2026-09-03T15:18:52.805278+00:00",
+  "surface": "bigquery_conversational_analytics",
+  "question": "How many home runs were hit in games Wax attended? Home runs are event_code 23 in this table.",
+  "project": "augmented-world-262319",
+  "dataset": "wax_baseball_dbt",
+  "table": "fct_plays",
+  "wall_clock_ms": 9515,
+  "events": [
+    {
+      "at_ms": 1030,
+      "message": {
+        "timestamp": "2026-09-03T15:18:42.460191Z",
+        "system_message": {
+          "text": {
+            "parts": [
+              "Analyzing context",
+              "Retrieved context for 1 table."
+            ],
+            "text_type": "THOUGHT"
+          }
+        }
+      }
+    },
+    {
+      "at_ms": 5954,
+      "message": {
+        "timestamp": "2026-09-03T15:18:47.363352Z",
+        "system_message": {
+          "text": {
+            "parts": [
+              "Running a query",
+              "SELECT COUNT(*) AS home_run_count\nFROM `augmented-world-262319.wax_baseball_dbt.fct_plays`\nWHERE was_attended = TRUE\n  AND event_code = 23"
+            ],
+            "text_type": "THOUGHT"
+          }
+        }
+      }
+    },
+    {
+      "at_ms": 7250,
+      "message": {
+        "timestamp": "2026-09-03T15:18:48.679709Z",
+        "system_message": {
+          "text": {
+            "parts": [
+              "Query execution completed",
+              "Query returned 1 row in 1.31s."
+            ],
+            "text_type": "THOUGHT"
+          }
+        }
+      }
+    },
+    {
+      "at_ms": 9510,
+      "message": {
+        "timestamp": "2026-09-03T15:18:50.940366Z",
+        "system_message": {
+          "text": {
+            "parts": [
+              "A total of 400 home runs were hit in games Wax attended."
+            ],
+            "text_type": "FINAL_RESPONSE"
+          }
+        }
+      }
+    },
+    {
+      "at_ms": 9510,
+      "message": {
+        "timestamp": "2026-09-03T15:18:50.940394Z",
+        "system_message": {
+          "data": {
+            "query": {
+              "datasources": [
+                {
+                  "bigquery_table_reference": {
+                    "project_id": "augmented-world-262319",
+                    "dataset_id": "wax_baseball_dbt",
+                    "table_id": "fct_plays"
+                  }
+                }
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "at_ms": 9510,
+      "message": {
+        "timestamp": "2026-09-03T15:18:50.940451Z",
+        "system_message": {
+          "data": {
+            "generated_sql": "SELECT COUNT(*) AS home_run_count\nFROM `augmented-world-262319.wax_baseball_dbt.fct_plays`\nWHERE was_attended = TRUE\n  AND event_code = 23"
+          }
+        }
+      }
+    },
+    {
+      "at_ms": 9510,
+      "message": {
+        "timestamp": "2026-09-03T15:18:50.940453Z",
+        "system_message": {
+          "data": {
+            "big_query_job": {
+              "project_id": "augmented-world-262319",
+              "job_id": "job_yOphPFutJW5y266tCz1w7HJ8lL0u",
+              "destination_table": {
+                "project_id": "augmented-world-262319",
+                "dataset_id": "_7b77a69207b3dc272c24bd8739027cd7bf24976f",
+                "table_id": "anone6273e4f7201ab5dbb118f760d3cfefa8de0c1a2ba1f61f8da7c1b2baceb0e63"
+              },
+              "location": "US",
+              "schema": {}
+            }
+          }
+        }
+      }
+    },
+    {
+      "at_ms": 9511,
+      "message": {
+        "timestamp": "2026-09-03T15:18:50.940465Z",
+        "system_message": {
+          "data": {
+            "result": {
+              "data": [
+                {
+                  "home_run_count": 400.0
+                }
+              ],
+              "name": "home_runs_attended_games",
+              "schema": {
+                "fields": [
+                  {
+                    "name": "home_run_count",
+                    "type_": "INTEGER",
+                    "mode": "NULLABLE"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "at_ms": 9511,
+      "message": {
+        "timestamp": "2026-09-03T15:18:50.941373Z",
+        "system_message": {
+          "text": {
+            "parts": [
+              "Analyze the distribution of home runs by inning in games Wax attended.",
+              "Identify the players who hit the most home runs in games Wax attended.",
+              "Show the home run counts for each stadium Wax visited."
+            ],
+            "text_type": "FOLLOWUP_QUESTIONS"
+          }
+        }
+      }
+    }
+  ],
+  "bq_job": {
+    "job_id": "job_yOphPFutJW5y266tCz1w7HJ8lL0u",
+    "total_bytes_processed": 0,
+    "total_bytes_billed": 0,
+    "cache_hit": true,
+    "slot_millis": null,
+    "estimated_bq_scan_cost_usd": 0.0
+  },
+  "error": null
+}

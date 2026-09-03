@@ -284,6 +284,104 @@ def claude_sdk_cell(traces: list[dict[str, Any]]) -> dict[str, Any] | None:
     }
 
 
+# ----------------------------------------------------------------------------- bigquery conversational analytics · capture_bigquery_ca.py traces
+
+def parse_bigquery_ca_trace(path: pathlib.Path) -> dict[str, Any]:
+    """One `capture_bigquery_ca.py --trace-out` file = one `chat()` stream: a flat,
+    wall-clock-timestamped list of raw `Message` dicts (via MessageToDict), plus a
+    measured BigQuery job lookup (real bytes billed, not an estimate)."""
+    d = json.loads(path.read_text(encoding="utf-8"))
+    thoughts, data_msgs, final_text, followups = [], [], "", []
+    generated_sql = None
+    for e in d["events"]:
+        sm = e["message"].get("system_message", {})
+        if "text" in sm:
+            tt = sm["text"].get("text_type", "")
+            parts = sm["text"].get("parts", [])
+            if tt == "THOUGHT":
+                thoughts.append({"at_ms": e["at_ms"], "parts": parts})
+            elif tt == "FINAL_RESPONSE":
+                final_text = " ".join(parts)
+            elif tt == "FOLLOWUP_QUESTIONS":
+                followups = parts
+        elif "data" in sm:
+            dm = sm["data"]
+            data_msgs.append({"at_ms": e["at_ms"], **dm})
+            if "generated_sql" in dm:
+                generated_sql = dm["generated_sql"]
+    return {
+        "file": path.name,
+        "question": d["question"],
+        "dataset": d["dataset"], "table": d["table"],
+        "wall_clock_ms": d["wall_clock_ms"],
+        "thoughts": thoughts,
+        "generated_sql": generated_sql,
+        "data_msgs": data_msgs,
+        "final": final_text,
+        "followups": followups,
+        "bq_job": d.get("bq_job"),
+        "has_reference": REFERENCE in json.dumps(d) or REFERENCE in (final_text or ""),
+        "is_g2": "home run" in d["question"].lower(),
+    }
+
+
+def bigquery_ca_cell(traces: list[dict[str, Any]]) -> dict[str, Any] | None:
+    g2 = next((t for t in traces if t["is_g2"] and t["has_reference"]), None)
+    if g2 is None:
+        return None
+    job = g2["bq_job"] or {}
+
+    def _flat(s: str) -> str:
+        return " ".join((s or "").split())
+
+    thought_txt = " → ".join(
+        f"\"{'; '.join(_flat(p) for p in t['parts'])}\"" for t in g2["thoughts"]
+    )
+    flat_sql = _flat(g2["generated_sql"])
+    return {
+        "surface": "BigQuery Conversational Analytics",
+        "agent": "console data agent (Data Chat API) — `capture_bigquery_ca.py`",
+        "status": "measured",
+        "cells": {
+            "plan/reasoning": (
+                f"**yes, in plain sentences — the strongest of the three surfaces.** {len(g2['thoughts'])} "
+                f"`THOUGHT`-typed messages, each human-readable, not just structural: {thought_txt}. "
+                f"Agentforce shows a step sequence with no stated reason; the Claude SDK shows tool calls with "
+                f"billed-but-unsurfaced thinking; this API narrates its own plan in text."
+            ),
+            "tool-or-SQL": (
+                f"**SQL, verbatim, sent twice** — once inside a `THOUGHT` message before it runs, once again "
+                f"as a structured `generated_sql` field after: `` {flat_sql[:200]} ``. No other "
+                f"surface in this matrix exposes the literal query text."
+            ),
+            "grounding source": (
+                f"**present, and independently checkable.** The `data` message names the exact BigQuery table "
+                f"(`{g2['dataset']}.{g2['table']}`) and, uniquely, the underlying **BigQuery job id** "
+                f"(`{job.get('job_id', '—')}`) — a receipt an operator could look up in BigQuery's own job "
+                f"history to independently confirm the query ran, separate from trusting this trace at all."
+            ),
+            "tokens + latency": (
+                f"**latency yes (self-timestamped, same gap as the Claude SDK — the API embeds no per-step "
+                f"timing of its own); tokens absent, cost partially measured.** Turn wall-clock "
+                f"{g2['wall_clock_ms']} ms. The BigQuery *warehouse* leg is measured exactly, not estimated: "
+                f"job `{job.get('job_id', '—')}` billed **{job.get('total_bytes_billed', 0)} bytes** "
+                f"(cache_hit={job.get('cache_hit')}) → ${job.get('estimated_bq_scan_cost_usd', 0):.8f} at "
+                f"on-demand pricing. **What's still unmeasured: the Conversational Analytics API's own per-call "
+                f"service fee** — the pricing page returned no billing figures on two separate fetches this "
+                f"session; only the BigQuery scan underneath it is priced here."
+            ),
+            "retrieval path": (
+                "**official Python client (`google-cloud-geminidataanalytics`), streaming `chat()`, Application "
+                "Default Credentials — no CLI, no gitignored file.** The discovery document "
+                "(`$discovery/rest?version=v1`) itself 403s even with a valid OAuth token (measured 2026-09-03) "
+                "— the typed client was the only path that actually worked; hand-built REST would have needed "
+                "guesswork against thin docs."
+            ),
+        },
+        "evidence": {"g2": g2, "traces": traces},
+    }
+
+
 # ----------------------------------------------------------------------------- rubric derivation
 
 def agentforce_cell(sessions: list[dict[str, Any]], runs: list[dict[str, Any]]) -> dict[str, Any] | None:
@@ -407,7 +505,8 @@ def observability_findings(sessions: list[dict[str, Any]]) -> list[dict[str, Any
 # ----------------------------------------------------------------------------- presentation
 
 def render(cell_rows: list[dict[str, Any]], af: dict[str, Any] | None,
-           sdk: dict[str, Any] | None, findings: list[dict[str, Any]]) -> str:
+           sdk: dict[str, Any] | None, bq: dict[str, Any] | None,
+           findings: list[dict[str, Any]]) -> str:
     stamp = datetime.date.today().isoformat()
     lines = [
         "# Observability receipts — Keeping Score",
@@ -522,6 +621,35 @@ def render(cell_rows: list[dict[str, Any]], af: dict[str, Any] | None,
             lines.append(f"| `{p['name']}` | {json.dumps(p['input'])} | {p['latency_ms']} | {res} |")
         lines.append("")
 
+    if bq:
+        g2 = bq["evidence"]["g2"]
+        job = g2["bq_job"] or {}
+
+        def _flat2(s: str) -> str:
+            return " ".join((s or "").split())
+
+        lines += [
+            "## BigQuery Conversational Analytics — the console-agent cell, from the trace",
+            "",
+            f"Run `{g2['file']}` against `{g2['dataset']}.{g2['table']}` — "
+            f"`observability/traces/bigquery_ca/{g2['file']}`.",
+            "",
+            "| Step shape | Value |",
+            "|---|---|",
+            f"| User | {g2['question']} |",
+            f"| THOUGHT messages | " + " → ".join(
+                f"\"{'; '.join(_flat2(p) for p in t['parts'])[:80]}\"" for t in g2["thoughts"]
+            ) + " |",
+            f"| generated_sql | `` {_flat2(g2['generated_sql'])} `` |",
+            f"| BigQuery job | `{job.get('job_id', '—')}` — {job.get('total_bytes_billed', 0)} bytes billed, "
+            f"cache_hit={job.get('cache_hit')}, ~${job.get('estimated_bq_scan_cost_usd', 0):.8f} |",
+            f"| wall_clock_ms | {g2['wall_clock_ms']} |",
+            f"| Final | {g2['final']} |",
+            f"| Follow-ups offered | {'; '.join(g2['followups'])} |",
+            f"| Reference {REFERENCE} in trace | {'✅' if g2['has_reference'] else '❌'} |",
+            "",
+        ]
+
     if findings:
         lines += [
             "## Observability findings — what the trace caught that the prose hid",
@@ -562,16 +690,22 @@ def main() -> None:
     sdk_traces = [parse_claude_sdk_trace(p) for p in sorted(sdk_dir.glob("*.json"))] if sdk_dir.exists() else []
     sdk = claude_sdk_cell(sdk_traces)
 
+    bq_dir = TRACES / "bigquery_ca"
+    bq_traces = [parse_bigquery_ca_trace(p) for p in sorted(bq_dir.glob("*.json"))] if bq_dir.exists() else []
+    bq = bigquery_ca_cell(bq_traces)
+
     rows: list[dict[str, Any]] = []
     if af:
         rows.append(af)
     if sdk:
         rows.append(sdk)
+    if bq:
+        rows.append(bq)
     measured_names = {r["surface"].lower() for r in rows}
     rows += [r for r in read_cells() if r["surface"].lower() not in measured_names]
 
     findings = observability_findings(sessions)
-    RECEIPT_PATH.write_text(render(rows, af, sdk, findings), encoding="utf-8")
+    RECEIPT_PATH.write_text(render(rows, af, sdk, bq, findings), encoding="utf-8")
     print(f"wrote {RECEIPT_PATH}  ({sum(1 for r in rows if r['status']=='measured')}/{len(rows)} measured, "
           f"{len(findings)} finding(s))")
     for fnd in findings:

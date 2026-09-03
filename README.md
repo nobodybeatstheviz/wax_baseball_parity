@@ -80,3 +80,23 @@ OTel export (`CLAUDE_CODE_ENABLE_TELEMETRY=1` + `OTEL_METRICS_EXPORTER=console` 
 on stdout, stderr, or the debug file. The in-process `--trace-out` capture is the
 reliable route; don't spend more time on the OTel path without a re-check against a
 newer CLI version first.
+
+Capture a new BigQuery Conversational Analytics run: `observability/capture_bigquery_ca.py`
+(needs `pip install google-cloud-geminidataanalytics` and `gcloud auth
+application-default login` against a project with `geminidataanalytics.googleapis.com`
+enabled). Streams `DataChatServiceClient.chat()`, wall-clock-timestamps every message,
+and — since the response carries a BigQuery job id — looks that job up afterward for
+its real `total_bytes_billed`, so cost is measured, not estimated:
+
+```powershell
+cd C:\Users\georg\Documents\CODING\wax_baseball_parity
+python observability\capture_bigquery_ca.py --trace-out observability\traces\bigquery_ca\<date>-g2.json
+```
+
+Two things measured 2026-09-03, worth knowing before repeating this: the API's own
+**discovery document** (`$discovery/rest?version=v1`) 403s even with a valid `gcloud`
+OAuth token — the typed Python client is the only route that actually works, the REST
+reference docs alone aren't enough to hand-build a request correctly. And **the
+Conversational Analytics API's own per-call/token pricing is undocumented** — Google's
+pricing page returns no billing figures on fetch; only the BigQuery warehouse scan
+underneath a call is priced here (via the job lookup), not the API's own service fee.
