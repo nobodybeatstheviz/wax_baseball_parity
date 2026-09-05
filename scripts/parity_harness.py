@@ -61,14 +61,16 @@ D360_MODEL = "Keeping_Score"
 D360_GATEWAY = "/services/data/v66.0/semantic-engine/gateway"
 
 TN_MCP_SERVER = os.environ.get("TN_MCP_SERVER", "tableau-next-pilot")
+D360_GCP_MODEL = "Keeping_Score_GCP"   # the GCP leg: BigQuery marts -> Parquet in GCS -> ingested DLOs
 
-ENGINES = ["bigquery", "databricks", "snowflake", "d360", "tableau_next"]
+ENGINES = ["bigquery", "databricks", "snowflake", "d360", "tableau_next", "d360_gcp"]
 ENGINE_LAYER = {
     "bigquery": "MetricFlow (dbt SL)",
     "databricks": "UC metric views",
     "snowflake": "native SEMANTIC VIEW (BASEBALL.SEMANTICS.KEEPING_SCORE)",
     "d360": f"Keeping_Score SDM (/semantic-engine/gateway, org {D360_ORG})",
     "tableau_next": f"Keeping_Score SDM via the hosted Tableau Next MCP (`{TN_MCP_SERVER}` · run_semantic_query)",
+    "d360_gcp": f"{D360_GCP_MODEL} SDM over GCS-ingested Parquet (the GCP leg; BigQuery zero-copy is ACCESS_CHECK in {D360_ORG})",
 }
 
 # ---------------------------------------------------------------------------
@@ -279,6 +281,48 @@ def run_d360(spec) -> list[list]:
     return SDM_TRANSFORMS[transform](rows) if transform else rows
 
 
+_gcp_model: dict | None = None
+
+
+def _gcp_resolve(query: dict) -> tuple[str, dict]:
+    """Re-target a Keeping_Score spec at Keeping_Score_GCP. Data 360 suffixes semantic
+    apiNames ORG-WIDE (measured 2026-09-05): the GCP model's objects are Attended_Games2,
+    Game_Attendee2, ... and its fields game_date8, attendee_name2, ...; its calc measures/dims
+    carry a _GCP suffix by construction (apply_sdm_gcp.py). So: semanticField -> name + _GCP;
+    tableField -> object by LABEL, field by suffix-stripped apiName — both read from the model."""
+    global _gcp_model
+    if _gcp_model is None:
+        m = _sf_rest(f"/services/data/v66.0/ssot/semantic/models/{D360_GCP_MODEL}?dataspace=default")
+        if "id" not in m:
+            raise RuntimeError(f"SDM {D360_GCP_MODEL} not found in org {D360_ORG}")
+        objs = {o["label"].replace(" ", "_"): o for o in m.get("semanticDataObjects", [])}
+        _gcp_model = {"id": m["id"], "objects": objs}
+    q = json.loads(json.dumps(query))
+    for f in q["fields"]:
+        ex = f["expression"]
+        if "semanticField" in ex:
+            ex["semanticField"]["name"] += "_GCP"
+        else:
+            tf = ex["tableField"]
+            obj = _gcp_model["objects"][tf["tableName"]]
+            fields = (obj.get("semanticDimensions") or []) + (obj.get("semanticMeasurements") or [])
+            hit = next((x["apiName"] for x in fields if x["apiName"].rstrip("0123456789") == tf["name"]), None)
+            if hit is None:
+                raise RuntimeError(f"{tf['tableName']}.{tf['name']} not on {D360_GCP_MODEL}")
+            tf["name"], tf["tableName"] = hit, obj["apiName"]
+    return _gcp_model["id"], q
+
+
+def run_d360_gcp(spec) -> list[list]:
+    _, query, transform = spec
+    model_id, q = _gcp_resolve(query)
+    data = _sf_rest(D360_GATEWAY, {"semanticModelId": model_id, "structuredSemanticQuery": q})
+    if data.get("status") != "SUCCESS":
+        raise RuntimeError(f"semantic query failed: {json.dumps(data)[:200]}")
+    rows = [list(r["values"]) for r in data["queryResults"]["queryData"]["rows"]]
+    return SDM_TRANSFORMS[transform](rows) if transform else rows
+
+
 _tn_mcp: HostedMcp | None = None
 
 
@@ -300,11 +344,13 @@ def run_tableau_next(spec) -> list[list]:
 
 RUNNERS = {"bigquery": run_bigquery, "snowflake": run_snowflake,
            "databricks": run_databricks, "d360": run_d360,
-           "tableau_next": run_tableau_next}
+           "tableau_next": run_tableau_next, "d360_gcp": run_d360_gcp}
 
-# tableau_next answers the d360 spec through its own transport — one definition, two surfaces.
+# tableau_next answers the d360 spec through its own transport; d360_gcp answers it against the
+# GCP-leg model (names re-resolved at runtime) — one definition, three D360 surfaces.
 for _q in QUESTIONS.values():
     _q.setdefault("tableau_next", _q["d360"])
+    _q.setdefault("d360_gcp", _q["d360"])
 
 
 # ---------------------------------------------------------------------------
@@ -396,7 +442,11 @@ def main() -> None:
         "gateway, org-alias-parameterized for the scratch-org replay. Tableau Next: the same SDM "
         f"through the Salesforce Hosted MCP server `analytics/{TN_MCP_SERVER}` (`run_semantic_query`), "
         "authenticated with Claude Code's OAuth for that server — the six-measure single-call form "
-        "hits the same `NO_PATH` join-graph limit D360 does, so questions run one join tree at a time.",
+        "hits the same `NO_PATH` join-graph limit D360 does, so questions run one join tree at a time. "
+        f"d360_gcp: `{D360_GCP_MODEL}`, the GCP leg — the same marts exported to Parquet in Google Cloud "
+        "Storage and INGESTED through the GA GCS connector (BigQuery's zero-copy connector is "
+        "`ACCESS_CHECK` in the scratch org), built by `wax_baseball_datacloud_deploy/apply_sdm_gcp.py`; "
+        "ingest, not federation — the honest label.",
         "",
     ]
     if _tn_mcp is not None:
