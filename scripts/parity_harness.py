@@ -11,6 +11,14 @@ Each engine answers the golden questions THROUGH ITS OWN SEMANTIC LAYER:
                 the d360 MCP query tool wraps this same gateway). Org alias via
                 D360_ORG env var (default devorg); the model id is resolved by
                 apiName at runtime, so the scratch-org replay needs no edits.
+    tableau_next  the SAME Keeping_Score SDM, reached through Tableau Next's
+                own surface: the Salesforce Hosted MCP server
+                `analytics/tableau-next-pilot` → `run_semantic_query` (W6a,
+                2026-09-05). Same definitions, different transport and query
+                dialect (proto-shaped snake_case) — a surface-parity column,
+                driven deterministically over MCP-HTTP with Claude Code's OAuth
+                (scripts/_hosted_mcp.py). Requires `claude mcp login
+                tableau-next-pilot` once.
 
 and the results are diffed against the reference answers recorded from
 BigQuery + MetricFlow on 2026-08-31. v1 (data parity, raw SQL over the
@@ -37,6 +45,7 @@ import tempfile
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 from _dbx_conn import get_connection as dbx_connection  # noqa: E402
+from _hosted_mcp import HostedMcp, semantic_query_rows, to_snake_query  # noqa: E402
 
 RECEIPT_PATH = pathlib.Path(r"C:\Users\georg\wax-system\wax-baseball\parity-receipts.md")
 
@@ -51,12 +60,15 @@ D360_ORG = os.environ.get("D360_ORG", "devorg")
 D360_MODEL = "Keeping_Score"
 D360_GATEWAY = "/services/data/v66.0/semantic-engine/gateway"
 
-ENGINES = ["bigquery", "databricks", "snowflake", "d360"]
+TN_MCP_SERVER = os.environ.get("TN_MCP_SERVER", "tableau-next-pilot")
+
+ENGINES = ["bigquery", "databricks", "snowflake", "d360", "tableau_next"]
 ENGINE_LAYER = {
     "bigquery": "MetricFlow (dbt SL)",
     "databricks": "UC metric views",
     "snowflake": "native SEMANTIC VIEW (BASEBALL.SEMANTICS.KEEPING_SCORE)",
     "d360": f"Keeping_Score SDM (/semantic-engine/gateway, org {D360_ORG})",
+    "tableau_next": f"Keeping_Score SDM via the hosted Tableau Next MCP (`{TN_MCP_SERVER}` · run_semantic_query)",
 }
 
 # ---------------------------------------------------------------------------
@@ -267,8 +279,32 @@ def run_d360(spec) -> list[list]:
     return SDM_TRANSFORMS[transform](rows) if transform else rows
 
 
+_tn_mcp: HostedMcp | None = None
+
+
+def run_tableau_next(spec) -> list[list]:
+    """The d360 spec, re-dialected: same fields/transform, sent as the Beta MCP's
+    proto-shaped structuredSemanticQuery. One MCP session per harness run."""
+    global _tn_mcp
+    if _tn_mcp is None:
+        _tn_mcp = HostedMcp(TN_MCP_SERVER)
+    _, query, transform = spec
+    res = _tn_mcp.call("run_semantic_query", {
+        "semanticModelApiName": D360_MODEL,
+        "source": "wax_baseball_parity",
+        "structuredSemanticQuery": to_snake_query(query),
+    })
+    rows = semantic_query_rows(res)
+    return SDM_TRANSFORMS[transform](rows) if transform else rows
+
+
 RUNNERS = {"bigquery": run_bigquery, "snowflake": run_snowflake,
-           "databricks": run_databricks, "d360": run_d360}
+           "databricks": run_databricks, "d360": run_d360,
+           "tableau_next": run_tableau_next}
+
+# tableau_next answers the d360 spec through its own transport — one definition, two surfaces.
+for _q in QUESTIONS.values():
+    _q.setdefault("tableau_next", _q["d360"])
 
 
 # ---------------------------------------------------------------------------
@@ -357,9 +393,14 @@ def main() -> None:
         "`CODING/wax_baseball_snowflake`. D360: two-cloud zero-copy federation "
         "(BigQuery + Databricks) + `Keeping_Score` SDM, deployed by "
         "`CODING/wax_baseball_datacloud_deploy` — queried through the semantic-engine "
-        "gateway, org-alias-parameterized for the scratch-org replay.",
+        "gateway, org-alias-parameterized for the scratch-org replay. Tableau Next: the same SDM "
+        f"through the Salesforce Hosted MCP server `analytics/{TN_MCP_SERVER}` (`run_semantic_query`), "
+        "authenticated with Claude Code's OAuth for that server — the six-measure single-call form "
+        "hits the same `NO_PATH` join-graph limit D360 does, so questions run one join tree at a time.",
         "",
     ]
+    if _tn_mcp is not None:
+        _tn_mcp.close()
     RECEIPT_PATH.write_text("\n".join(lines), encoding="utf-8")
     print(f"\nWrote {RECEIPT_PATH}")
     if not all_pass:

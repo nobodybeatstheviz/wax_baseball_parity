@@ -23,7 +23,8 @@ Surfaces handled:
     bigquery_ca        `capture_bigquery_ca.py` chat() streams
     databricks_genie   `capture_databricks_genie.py` polled conversations
     snowflake_cortex   `capture_snowflake_cortex_agent.py` SSE stream + event-table pairs
-    tableau agent      surfaces.json (read-only until case #474498479)
+    tableau_agent      `capture_tableau_agent.py` — Concierge via the hosted Tableau Next MCP
+                       (`analyze_data`; measured 2026-09-05, replacing the surfaces.json read row)
 
 Usage:
     python observability/extract_observability.py
@@ -645,6 +646,91 @@ def snowflake_cortex_cell(traces: list[dict[str, Any]]) -> dict[str, Any] | None
     }
 
 
+# ----------------------------------------------------------------------------- tableau agent · capture_tableau_agent.py traces
+
+def parse_tableau_agent_trace(path: pathlib.Path) -> dict[str, Any]:
+    """One `capture_tableau_agent.py --trace-out` file = one `analyze_data` call over the
+    hosted Tableau Next MCP: the answer prose, the literal structured semantic query
+    Concierge ran (decoded from troubleshootingInfo), the platform traceId, and an
+    optional vizMetadata spec — client wall-clock only (the response embeds no timing)."""
+    d = json.loads(path.read_text(encoding="utf-8"))
+    q = d.get("query")
+    fields = [f.get("alias") for f in (q or {}).get("fields", [])] if isinstance(q, dict) else []
+    filters = ((q or {}).get("flattenFilter") or {}).get("filters", []) if isinstance(q, dict) else []
+    answer = d.get("answer") or ""
+    return {
+        "file": path.name,
+        "question": d["question"],
+        "server": d.get("server"),
+        "model": d.get("model"),
+        "connect_ms": d.get("connect_ms"),
+        "wall_clock_ms": d["wall_clock_ms"],
+        "answer": answer,
+        "trace_id": d.get("trace_id"),
+        "sdm": d.get("sdm_api_names"),
+        "query": q,
+        "query_fields": fields,
+        "query_filters": filters,
+        "has_viz_spec": bool(d.get("viz_metadata")),
+        "error": d.get("error"),
+        # Reference must appear in the ANSWER prose — never the raw envelope, where a
+        # traceId or a wall-clock ms could contain 400 by coincidence.
+        "has_reference": REFERENCE in answer,
+        "is_g2": "home run" in d["question"].lower(),
+    }
+
+
+def tableau_agent_cell(traces: list[dict[str, Any]]) -> dict[str, Any] | None:
+    g2 = next((t for t in traces if t["is_g2"] and t["has_reference"]), None)
+    if g2 is None:
+        return None
+    q = g2["query"] or {}
+    flat_q = json.dumps(q)[:220] if q else "—"
+    filt = "; ".join(f"{f.get('fieldName')} {f.get('operator')} {f.get('value')}" for f in g2["query_filters"]) or "none"
+    return {
+        "surface": "Tableau Agent",
+        "agent": "Concierge (Analytics Q&A) over `Keeping_Score`, via the hosted MCP `analytics/tableau-next` — `capture_tableau_agent.py`",
+        "status": "measured",
+        "cells": {
+            "plan/reasoning": (
+                "**no reasoning text — but the plan is legible as the query it chose.** The response is answer "
+                "prose plus `troubleshootingInfo`; there is no thought stream, no step ladder. What *is* visible is "
+                f"the resolved intent: which governed field it bound the question to ({', '.join(g2['query_fields'])}) "
+                "and which filters it decided to add. The 'who is *I*' failure was diagnosable only here — the "
+                "prose said 0, the query showed a silent `attendee_key = <user id>` filter (fixed by model business "
+                "preferences, 2026-09-05)."
+            ),
+            "tool-or-SQL": (
+                f"**structured semantic query, verbatim, no SQL.** `troubleshootingInfo.query` = `` {flat_q} `` — "
+                f"the exact `semanticField` + aggregation + filters it sent to the semantic engine (filters this run: "
+                f"{filt}). Closest analogue to Databricks Genie's `MEASURE()` shape: it queries the governed measure "
+                "by name rather than re-deriving it."
+            ),
+            "grounding source": (
+                f"**named.** `sdmApiNames` = {g2['sdm']} on every answer; the query's `semanticField.name` values are "
+                "the model's calculated-measure apiNames. Grounding is the semantic model by construction — Concierge "
+                "cannot reach a table the SDM doesn't expose."
+            ),
+            "tokens + latency": (
+                f"**neither from the platform; latency self-timed.** Turn {g2['wall_clock_ms']} ms at the client "
+                f"(+{g2['connect_ms']} ms MCP session setup); no token or cost fields anywhere in the response — "
+                "usage is billed as Einstein Requests / Data 360 credits behind the Trust Layer, invisible per call. "
+                f"The platform `traceId` (`{g2['trace_id']}`) is the only handle for a server-side lookup, and no "
+                "customer-facing API resolves it yet."
+            ),
+            "retrieval path": (
+                "**MCP over HTTP, direct — the first Tableau surface here with an API-retrievable trace.** "
+                "`analyze_data` on the Salesforce Hosted MCP server, auth = External Client App (auth-code + PKCE, "
+                "named-user JWT; one browser login, refresh tokens after) reused from Claude Code's store by "
+                "`scripts/_hosted_mcp.py`. Enablement measured 2026-09-04/05: `Settings:EinsteinCopilot` deploy + "
+                "the Setup toggles *API Catalog → MCP Servers* and *Tableau Next Features → Tableau Agent* — no "
+                "agent template, no `BotTemplate`, `agentEnabled:false` on the model, and it still answers."
+            ),
+        },
+        "evidence": {"g2": g2, "traces": traces},
+    }
+
+
 # ----------------------------------------------------------------------------- rubric derivation
 
 def agentforce_cell(sessions: list[dict[str, Any]], runs: list[dict[str, Any]]) -> dict[str, Any] | None:
@@ -773,7 +859,7 @@ def observability_findings(sessions: list[dict[str, Any]]) -> list[dict[str, Any
 def render(cell_rows: list[dict[str, Any]], af: dict[str, Any] | None,
            sdk: dict[str, Any] | None, bq: dict[str, Any] | None,
            dbx: dict[str, Any] | None, snow: dict[str, Any] | None,
-           findings: list[dict[str, Any]]) -> str:
+           findings: list[dict[str, Any]], tn: dict[str, Any] | None = None) -> str:
     stamp = datetime.date.today().isoformat()
     lines = [
         "# Observability receipts — Keeping Score",
@@ -1004,6 +1090,41 @@ def render(cell_rows: list[dict[str, Any]], af: dict[str, Any] | None,
                 "",
             ]
 
+    if tn:
+        g2 = tn["evidence"]["g2"]
+        lines += [
+            "## Tableau Agent — the Concierge cell, from the hosted-MCP trace",
+            "",
+            f"Run `{g2['file']}` via `{g2['server']}` over `{g2['model']}` — "
+            f"`observability/traces/tableau_agent/{g2['file']}`.",
+            "",
+            "| Step shape | Value |",
+            "|---|---|",
+            f"| User | {g2['question']} |",
+            f"| Query fields | {', '.join(f'`{x}`' for x in g2['query_fields']) or '—'} |",
+            f"| Query filters | " + ("; ".join(f"`{f.get('fieldName')} {f.get('operator')} {f.get('value')}`" for f in g2["query_filters"]) or "none") + " |",
+            f"| Structured query | `` {json.dumps(g2['query'])[:300] if g2['query'] else '—'} `` |",
+            f"| traceId | `{g2['trace_id']}` |",
+            f"| Viz spec returned | {'yes' if g2['has_viz_spec'] else 'no'} |",
+            f"| connect_ms / wall_clock_ms | {g2['connect_ms']} / {g2['wall_clock_ms']} |",
+            f"| Final | {g2['answer']} |",
+            f"| Reference {REFERENCE} in trace | {'✅' if g2['has_reference'] else '❌'} |",
+            "",
+        ]
+        others = [t for t in tn["evidence"]["traces"] if t is not g2]
+        if others:
+            lines += [
+                "Other captured questions through the same surface:",
+                "",
+                "| Question | Fields | Filters | Answer | ms |",
+                "|---|---|---|---|---|",
+            ]
+            for t in others:
+                filt = "; ".join(f"{f.get('fieldName')} {f.get('operator')} {f.get('value')}" for f in t["query_filters"]) or "none"
+                ans = (t["answer"] or t.get("error") or "").replace("|", "\\|").replace("\n", " ")
+                lines.append(f"| {t['question']} | {', '.join(t['query_fields']) or '—'} | {filt} | {ans[:160]} | {t['wall_clock_ms']} |")
+            lines.append("")
+
     if findings:
         lines += [
             "## Observability findings — what the trace caught that the prose hid",
@@ -1056,6 +1177,10 @@ def main() -> None:
     snow_traces = [parse_snowflake_cortex_trace(p) for p in sorted(snow_dir.glob("*.json"))] if snow_dir.exists() else []
     snow = snowflake_cortex_cell(snow_traces)
 
+    tn_dir = TRACES / "tableau_agent"
+    tn_traces = [parse_tableau_agent_trace(p) for p in sorted(tn_dir.glob("*.json"))] if tn_dir.exists() else []
+    tn = tableau_agent_cell(tn_traces)
+
     rows: list[dict[str, Any]] = []
     if af:
         rows.append(af)
@@ -1067,11 +1192,13 @@ def main() -> None:
         rows.append(dbx)
     if snow:
         rows.append(snow)
+    if tn:
+        rows.append(tn)
     measured_names = {r["surface"].lower() for r in rows}
     rows += [r for r in read_cells() if r["surface"].lower() not in measured_names]
 
     findings = observability_findings(sessions)
-    RECEIPT_PATH.write_text(render(rows, af, sdk, bq, dbx, snow, findings), encoding="utf-8")
+    RECEIPT_PATH.write_text(render(rows, af, sdk, bq, dbx, snow, findings, tn), encoding="utf-8")
     print(f"wrote {RECEIPT_PATH}  ({sum(1 for r in rows if r['status']=='measured')}/{len(rows)} measured, "
           f"{len(findings)} finding(s))")
     for fnd in findings:

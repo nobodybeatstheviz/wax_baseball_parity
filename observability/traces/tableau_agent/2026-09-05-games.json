@@ -1,0 +1,82 @@
+{
+  "captured_at": "2026-09-05T04:20:32.016199+00:00",
+  "surface": "tableau_agent",
+  "server": "tableau-next",
+  "model": "Keeping_Score",
+  "question": "How many games have I attended in total?",
+  "connect_ms": 1026,
+  "wall_clock_ms": 6788,
+  "answer": "You have attended a total of **178 games**.",
+  "trace_id": "fa65fd634aa2d7aded6f05b7a2ac3cb4",
+  "sdm_api_names": [
+    "Keeping_Score"
+  ],
+  "query": {
+    "fields": [
+      {
+        "expression": {
+          "semanticField": {
+            "name": "Games_Attended"
+          }
+        },
+        "alias": "USER_AGG(Games_Attended)",
+        "semanticAggregationMethod": "SEMANTIC_AGGREGATION_METHOD_USER_AGG"
+      }
+    ],
+    "options": {
+      "sortOrders": [],
+      "limitOptions": {
+        "limit": 5000
+      },
+      "disallowCrossJoin": true
+    },
+    "semanticContext": {
+      "timezone": {
+        "id": "America/Los_Angeles"
+      },
+      "locale": {
+        "code": "en_US"
+      }
+    },
+    "parameters": [],
+    "advancedDimensionFilters": [],
+    "hierarchicalScopes": [],
+    "onTheFlyOverrides": [],
+    "globalFilters": [],
+    "advancedDimensionFiltersV2": [],
+    "dimensionSets": []
+  },
+  "ir_spec": null,
+  "viz_metadata": null,
+  "raw": {
+    "content": [
+      {
+        "type": "text",
+        "text": "{\"answer\":\"You have attended a total of **178 games**.\",\"slack\":{\"ui\":{\"suppress\":true}},\"troubleshootingInfo\":{\"irSpec\":null,\"query\":\"{&quot;fields&quot;:[{&quot;expression&quot;:{&quot;semanticField&quot;:{&quot;name&quot;:&quot;Games_Attended&quot;}},&quot;alias&quot;:&quot;USER_AGG(Games_Attended)&quot;,&quot;semanticAggregationMethod&quot;:&quot;SEMANTIC_AGGREGATION_METHOD_USER_AGG&quot;}],&quot;options&quot;:{&quot;sortOrders&quot;:[],&quot;limitOptions&quot;:{&quot;limit&quot;:5000},&quot;disallowCrossJoin&quot;:true},&quot;semanticContext&quot;:{&quot;timezone&quot;:{&quot;id&quot;:&quot;America/Los_Angeles&quot;},&quot;locale&quot;:{&quot;code&quot;:&quot;en_US&quot;}},&quot;parameters&quot;:[],&quot;advancedDimensionFilters&quot;:[],&quot;hierarchicalScopes&quot;:[],&quot;onTheFlyOverrides&quot;:[],&quot;globalFilters&quot;:[],&quot;advancedDimensionFiltersV2&quot;:[],&quot;dimensionSets&quot;:[]}\",\"sdmApiNames\":[\"Keeping_Score\"],\"traceId\":\"fa65fd634aa2d7aded6f05b7a2ac3cb4\"},\"vizMetadata\":\"\"}"
+      }
+    ],
+    "isError": false,
+    "structuredContent": {
+      "answer": "You have attended a total of **178 games**.",
+      "slack": {
+        "ui": {
+          "suppress": true
+        }
+      },
+      "troubleshootingInfo": {
+        "irSpec": null,
+        "query": "{&quot;fields&quot;:[{&quot;expression&quot;:{&quot;semanticField&quot;:{&quot;name&quot;:&quot;Games_Attended&quot;}},&quot;alias&quot;:&quot;USER_AGG(Games_Attended)&quot;,&quot;semanticAggregationMethod&quot;:&quot;SEMANTIC_AGGREGATION_METHOD_USER_AGG&quot;}],&quot;options&quot;:{&quot;sortOrders&quot;:[],&quot;limitOptions&quot;:{&quot;limit&quot;:5000},&quot;disallowCrossJoin&quot;:true},&quot;semanticContext&quot;:{&quot;timezone&quot;:{&quot;id&quot;:&quot;America/Los_Angeles&quot;},&quot;locale&quot;:{&quot;code&quot;:&quot;en_US&quot;}},&quot;parameters&quot;:[],&quot;advancedDimensionFilters&quot;:[],&quot;hierarchicalScopes&quot;:[],&quot;onTheFlyOverrides&quot;:[],&quot;globalFilters&quot;:[],&quot;advancedDimensionFiltersV2&quot;:[],&quot;dimensionSets&quot;:[]}",
+        "sdmApiNames": [
+          "Keeping_Score"
+        ],
+        "traceId": "fa65fd634aa2d7aded6f05b7a2ac3cb4"
+      },
+      "vizMetadata": ""
+    },
+    "_meta": {
+      "salesforce/org_base_url": "https://drive-flow-1956-dev-ed.scratch.my.salesforce.com",
+      "salesforce/user_id": "005QL00000r1CzwYAE"
+    }
+  },
+  "error": null
+}

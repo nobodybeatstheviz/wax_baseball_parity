@@ -1,0 +1,82 @@
+{
+  "captured_at": "2026-09-05T04:20:23.553637+00:00",
+  "surface": "tableau_agent",
+  "server": "tableau-next",
+  "model": "Keeping_Score",
+  "question": "How many home runs have I witnessed in person?",
+  "connect_ms": 1025,
+  "wall_clock_ms": 9085,
+  "answer": "You have witnessed a total of **400 home runs** in person. This calculation includes all games in the dataset without any filtering applied.",
+  "trace_id": "1dfa807e02e1c515c8bbe92e5fbccbb8",
+  "sdm_api_names": [
+    "Keeping_Score"
+  ],
+  "query": {
+    "fields": [
+      {
+        "expression": {
+          "semanticField": {
+            "name": "Home_Runs_Witnessed"
+          }
+        },
+        "alias": "USER_AGG(Home_Runs_Witnessed)",
+        "semanticAggregationMethod": "SEMANTIC_AGGREGATION_METHOD_USER_AGG"
+      }
+    ],
+    "options": {
+      "sortOrders": [],
+      "limitOptions": {
+        "limit": 5000
+      },
+      "disallowCrossJoin": true
+    },
+    "semanticContext": {
+      "timezone": {
+        "id": "America/Los_Angeles"
+      },
+      "locale": {
+        "code": "en_US"
+      }
+    },
+    "parameters": [],
+    "advancedDimensionFilters": [],
+    "hierarchicalScopes": [],
+    "onTheFlyOverrides": [],
+    "globalFilters": [],
+    "advancedDimensionFiltersV2": [],
+    "dimensionSets": []
+  },
+  "ir_spec": null,
+  "viz_metadata": null,
+  "raw": {
+    "content": [
+      {
+        "type": "text",
+        "text": "{\"answer\":\"You have witnessed a total of **400 home runs** in person. This calculation includes all games in the dataset without any filtering applied.\",\"slack\":{\"ui\":{\"suppress\":true}},\"troubleshootingInfo\":{\"irSpec\":null,\"query\":\"{&quot;fields&quot;:[{&quot;expression&quot;:{&quot;semanticField&quot;:{&quot;name&quot;:&quot;Home_Runs_Witnessed&quot;}},&quot;alias&quot;:&quot;USER_AGG(Home_Runs_Witnessed)&quot;,&quot;semanticAggregationMethod&quot;:&quot;SEMANTIC_AGGREGATION_METHOD_USER_AGG&quot;}],&quot;options&quot;:{&quot;sortOrders&quot;:[],&quot;limitOptions&quot;:{&quot;limit&quot;:5000},&quot;disallowCrossJoin&quot;:true},&quot;semanticContext&quot;:{&quot;timezone&quot;:{&quot;id&quot;:&quot;America/Los_Angeles&quot;},&quot;locale&quot;:{&quot;code&quot;:&quot;en_US&quot;}},&quot;parameters&quot;:[],&quot;advancedDimensionFilters&quot;:[],&quot;hierarchicalScopes&quot;:[],&quot;onTheFlyOverrides&quot;:[],&quot;globalFilters&quot;:[],&quot;advancedDimensionFiltersV2&quot;:[],&quot;dimensionSets&quot;:[]}\",\"sdmApiNames\":[\"Keeping_Score\"],\"traceId\":\"1dfa807e02e1c515c8bbe92e5fbccbb8\"},\"vizMetadata\":\"\"}"
+      }
+    ],
+    "isError": false,
+    "structuredContent": {
+      "answer": "You have witnessed a total of **400 home runs** in person. This calculation includes all games in the dataset without any filtering applied.",
+      "slack": {
+        "ui": {
+          "suppress": true
+        }
+      },
+      "troubleshootingInfo": {
+        "irSpec": null,
+        "query": "{&quot;fields&quot;:[{&quot;expression&quot;:{&quot;semanticField&quot;:{&quot;name&quot;:&quot;Home_Runs_Witnessed&quot;}},&quot;alias&quot;:&quot;USER_AGG(Home_Runs_Witnessed)&quot;,&quot;semanticAggregationMethod&quot;:&quot;SEMANTIC_AGGREGATION_METHOD_USER_AGG&quot;}],&quot;options&quot;:{&quot;sortOrders&quot;:[],&quot;limitOptions&quot;:{&quot;limit&quot;:5000},&quot;disallowCrossJoin&quot;:true},&quot;semanticContext&quot;:{&quot;timezone&quot;:{&quot;id&quot;:&quot;America/Los_Angeles&quot;},&quot;locale&quot;:{&quot;code&quot;:&quot;en_US&quot;}},&quot;parameters&quot;:[],&quot;advancedDimensionFilters&quot;:[],&quot;hierarchicalScopes&quot;:[],&quot;onTheFlyOverrides&quot;:[],&quot;globalFilters&quot;:[],&quot;advancedDimensionFiltersV2&quot;:[],&quot;dimensionSets&quot;:[]}",
+        "sdmApiNames": [
+          "Keeping_Score"
+        ],
+        "traceId": "1dfa807e02e1c515c8bbe92e5fbccbb8"
+      },
+      "vizMetadata": ""
+    },
+    "_meta": {
+      "salesforce/org_base_url": "https://drive-flow-1956-dev-ed.scratch.my.salesforce.com",
+      "salesforce/user_id": "005QL00000r1CzwYAE"
+    }
+  },
+  "error": null
+}
