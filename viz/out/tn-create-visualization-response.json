@@ -1,0 +1,41 @@
+{
+  "tool": "create_visualization",
+  "arguments": {
+    "label": "Home runs witnessed, by year",
+    "workspaceId": "1DyQL0000002fTh0AI",
+    "workspaceName": "Keeping_Score",
+    "semanticModelName": "Keeping_Score",
+    "semanticModelLabel": "Keeping Score",
+    "fields": {
+      "yr": {
+        "fieldName": "Game_Year",
+        "displayCategory": "Discrete"
+      },
+      "hr": {
+        "fieldName": "Home_Runs_Witnessed",
+        "displayCategory": "Continuous",
+        "level": "AggregateFunction",
+        "function": "UserAgg",
+        "numberFormat": "Precise"
+      }
+    },
+    "visualSpecification": {
+      "rows": [
+        "hr"
+      ],
+      "columns": [
+        "yr"
+      ],
+      "marks": {
+        "panes": {
+          "type": "Bar"
+        }
+      }
+    },
+    "sortIntent": "DimensionAscending"
+  },
+  "response": {
+    "defaultExc": "{\"id\":\"1AKQL00000MhalT4AR\",\"label\":\"Home runs witnessed, by year\",\"name\":\"home_runs_witnessed_by_year_1789651156185\"}",
+    "responseCode": 201.0
+  }
+}

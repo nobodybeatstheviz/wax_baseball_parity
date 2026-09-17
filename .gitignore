@@ -18,3 +18,4 @@ desktop.ini
 viz/out/*
 !viz/out/*.csv
 !viz/out/*.png
+!viz/out/*.json

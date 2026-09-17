@@ -1,0 +1,33 @@
+{
+  "tool": "create_workspace",
+  "arguments": {
+    "name": "Keeping_Score",
+    "label": "Keeping Score",
+    "description": "Build 2.5 \u2014 the viz counterpoint: the same G2 chart on every door. Created headlessly through the Beta MCP 2026-09-17."
+  },
+  "response": {
+    "assetsCount": 0.0,
+    "cacheableKey": "1DyQL0000002fTh0AI",
+    "createdBy": {
+      "id": "005QL00000r1CzwYAE",
+      "name": "User User"
+    },
+    "createdDate": "2026-09-17T13:18:23.000Z",
+    "description": "Build 2.5 \u2014 the viz counterpoint: the same G2 chart on every door. Created headlessly through the Beta MCP 2026-09-17.",
+    "id": "1DyQL0000002fTh0AI",
+    "label": "Keeping Score",
+    "lastModifiedBy": {
+      "id": "005QL00000r1CzwYAE",
+      "name": "User User"
+    },
+    "lastModifiedDate": "2026-09-17T13:18:23.000Z",
+    "name": "Keeping_Score",
+    "permissions": {
+      "delete": true,
+      "edit": true,
+      "share": true,
+      "view": true
+    },
+    "url": "/services/data/v67.0/tableau/workspaces/Keeping_Score"
+  }
+}
