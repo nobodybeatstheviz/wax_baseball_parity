@@ -51,7 +51,8 @@ def _bigquery() -> list[tuple[int, int]]:
 
 def _snowflake() -> list[tuple[int, int]]:
     snow = os.environ.get("SNOW_EXE", "snow")
-    out = subprocess.run([snow, "sql", "-c", "wax_baseball_key", "--format", "json", "-q", SQL["snowflake"]],
+    sql = " ".join(SQL["snowflake"].split())      # one line: a multi-line -q through the Windows shell breaks silently
+    out = subprocess.run([snow, "sql", "-c", "wax_baseball_key", "--format", "json", "-q", sql],
                          capture_output=True, text=True, encoding="utf-8", shell=(os.name == "nt"))
     if out.returncode:
         raise RuntimeError(out.stderr[-800:])

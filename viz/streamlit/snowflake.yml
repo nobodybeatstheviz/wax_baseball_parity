@@ -1,0 +1,14 @@
+definition_version: 2
+entities:
+  keeping_score_hr_by_year:
+    type: streamlit
+    identifier:
+      name: KEEPING_SCORE_HR_BY_YEAR
+      database: BASEBALL
+      schema: SEMANTICS
+    title: "Keeping Score - HR by Year"
+    query_warehouse: WAX_WH
+    main_file: streamlit_app.py
+    stage: BASEBALL.SEMANTICS.STREAMLIT_APPS
+    artifacts:
+      - streamlit_app.py

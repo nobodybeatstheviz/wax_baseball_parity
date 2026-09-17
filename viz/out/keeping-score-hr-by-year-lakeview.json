@@ -1,0 +1,80 @@
+{
+  "datasets": [
+    {
+      "name": "hr_by_year",
+      "displayName": "HR by year (mv_plays)",
+      "queryLines": [
+        "SELECT YEAR(game_date) AS yr, MEASURE(home_runs_witnessed) AS hr\n        FROM wax_baseball.semantics.mv_plays\n        GROUP BY YEAR(game_date) ORDER BY yr"
+      ]
+    }
+  ],
+  "pages": [
+    {
+      "name": "page_1",
+      "displayName": "Home runs witnessed, by year",
+      "layout": [
+        {
+          "widget": {
+            "name": "hr_by_year_bar",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "hr_by_year",
+                  "fields": [
+                    {
+                      "name": "yr",
+                      "expression": "`yr`"
+                    },
+                    {
+                      "name": "hr",
+                      "expression": "`hr`"
+                    }
+                  ],
+                  "disaggregated": true
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "widgetType": "bar",
+              "encodings": {
+                "x": {
+                  "fieldName": "yr",
+                  "scale": {
+                    "type": "categorical"
+                  },
+                  "displayName": "Year"
+                },
+                "y": {
+                  "fieldName": "hr",
+                  "scale": {
+                    "type": "quantitative"
+                  },
+                  "displayName": "Home runs witnessed"
+                }
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "Home runs witnessed, by year",
+                "showDescription": true,
+                "description": "Databricks AI/BI \u00b7 400 home runs \u00b7 178 games \u00b7 1984\u20132025"
+              },
+              "mark": {
+                "colors": [
+                  "#DB1D1D"
+                ]
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 0,
+            "width": 6,
+            "height": 7
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -21,12 +21,12 @@ takes cheaply and the receipt says what it didn't. Fonts are hard; defaults are 
 
 | Door | Inning | Generator | Headless to… | Where headless stops | State |
 |---|---|---|---|---|---|
-| Tableau Cloud | 1st | `../../wax_baseball_w5_datasource/build_workbook.py` | publish + PNG/CSV receipt via the Tableau MCP | nowhere | ✅ 9/10 (unstyled; style block pending) |
+| Tableau Cloud | 1st | `../../wax_baseball_w5_datasource/build_workbook.py` | publish + PNG/CSV receipt via the Tableau MCP; NBTV mark color + fonts as a `<style>` block from `chart.json` | nowhere — the red bars took (font: default in the PNG, the server accepted the rule but the render didn't show it) | ✅ 9/10 · restyled 9/17 |
 | **Claude artifact** | 8th | `build_artifact.py` | the HTML + CSV + PNG; the Artifact tool publishes | nowhere | ✅ **2026-09-16** |
 | **Tableau Next** | 3rd | `build_tn_viz.py` | workspace + viz created through the Beta MCP's `create_workspace` / `create_visualization`; receipt via `run_semantic_query` | **the capture** (no image API — `render_visualization` returns JSON) and **the brand** (no mark-color op on `edit_visualization`; tool default ships) | ✅ **2026-09-17** · viz `1AKQL00000MhalT4AR` · ⚡ org expires 2026-10-03 |
-| Streamlit in Snowflake | 6th | `streamlit/` (planned) | `snow streamlit deploy` | the screenshot | ⬜ |
-| Databricks AI/BI | 6th | `build_lakeview.py` (planned) | `w.lakeview.create` + publish | the screenshot; format unmeasured | ⬜ |
-| Looker Studio | 2nd | `build_bq_view.py` (planned) | the BigQuery view + a Linking API URL | the report itself (GUI) | ⬜ |
+| **Streamlit in Snowflake** | 6th | `streamlit/` (`streamlit_app.py` + `snowflake.yml`) | `snow streamlit deploy` from the key-pair connection; receipt via `query.py snowflake` | the screenshot (no image API); brand: Altair takes the bar color + fonts in code | ✅ **2026-09-17** · `BASEBALL.SEMANTICS.KEEPING_SCORE_HR_BY_YEAR` |
+| **Databricks AI/BI** | 6th | `build_lakeview.py` | dashboard JSON → `w.lakeview.create/update` + `publish` (SDK); receipt via `query.py databricks` | the screenshot; brand: `spec.mark.colors` sent, unverified until the warehouse renders | 🟡 **2026-09-17 published** · `01f1b29c59d31633894383c3d451a242` · receipt PENDING — the serverless warehouse won't start ("Cannot create the resource"), platform-side |
+| **Looker Studio** | 2nd | `build_bq_view.py` | the view `wax_baseball_dbt.v_hr_by_year` + the Linking API URL (`out/looker-studio-link.txt`); receipt via BigQuery | **the report** — open the link, add one bar (Year × Home Runs), screenshot. By design | ✅ headless half 2026-09-17 · GUI half is Wax's |
 
 ## The Claude-artifact door — how to
 
@@ -72,6 +72,42 @@ What the Beta server (`analytics/tableau-next-pilot`, 132 tools on 9/17) actuall
 **Receipts in `out/`:** `keeping-score-hr-by-year-tn.csv` (34 rows = 400) · `tn-tool-schemas.json` · `tn-discovery.json` · `tn-create_workspace-response.json` · `tn-create-visualization-response.json` · `tn-get_visualization-response.json` (the hydrated bundle) · `tn-render_visualization-response.json`.
 
 **Re-mint note:** the scratch org expires 2026-10-03; everything above replays from these files against a new org (re-apply the business preferences first, then workspace, then viz).
+
+## The Streamlit-in-Snowflake door — how to (measured 2026-09-17)
+
+```powershell
+cd viz\streamlit
+snow streamlit deploy -c wax_baseball_key --replace     # creates the stage + the STREAMLIT object; prints the app URL
+cd .. ; py query.py snowflake                           # the receipt: 34 rows = 400
+```
+
+- `snowflake.yml` (definition v2) names the object `BASEBALL.SEMANTICS.KEEPING_SCORE_HR_BY_YEAR`, warehouse `WAX_WH`, stage `BASEBALL.SEMANTICS.STREAMLIT_APPS`. The CLI builds a bundle under `streamlit/output/` (gitignored).
+- The app reads the **semantic view** (`SEMANTIC_VIEW(... DIMENSIONS plays.play_year METRICS plays.home_runs_witnessed)`) — the same object Cortex Analyst answers from; the two front doors share one definition.
+- Brand: Altair takes the bar color, corner radius, and axis fonts in code — the ceiling, reached. The four hexes are constants in the app because Snowflake can't read the token file; that's the one deliberate second appearance, noted in the app.
+- Gotcha: a multi-line `-q` argument through `snow sql` on Windows fails silently (rc≠0, empty stderr) — `query.py` collapses the SQL to one line.
+- Where headless stops: the screenshot. URL: `https://app.snowflake.com/us-east-1/ylc58210/#/streamlit-apps/BASEBALL.SEMANTICS.KEEPING_SCORE_HR_BY_YEAR`.
+
+## The Databricks AI/BI door — how to (measured 2026-09-17, receipt pending)
+
+```powershell
+py viz\build_lakeview.py --build --publish      # JSON -> lakeview.create (or update) -> publish; prints the published URL
+py viz\build_lakeview.py --receipt              # SQL warehouse -> CSV, PASS on 400
+```
+
+- The serialized dashboard is plain JSON: one dataset (`queryLines` = the `mv_plays` metric-view query), one page, one `bar` widget (`spec.version: 3`, `encodings.x` categorical year, `encodings.y` quantitative measure, `frame.title`). `w.lakeview.create(dashboard=Dashboard(...))` accepted it first try; `publish(embed_credentials=True)` too. Idempotent: reruns find the dashboard by display name and `update`.
+- Published: `https://dbc-9a4434eb-8c0f.cloud.databricks.com/sql/dashboardsv3/01f1b29c59d31633894383c3d451a242/published`
+- **Open:** the Serverless Starter Warehouse is `STOPPED` and `warehouses.start` returns *"Cannot create the resource, please try again later"* (9/17 morning) — a platform-side start failure, so neither the receipt query nor the dashboard's render can run until it comes back. Rerun `--receipt` later; if it persists, the honest line is "authored and published headlessly; render pending the warehouse."
+- Brand: `spec.mark.colors: ["#DB1D1D"]` is sent; whether Lakeview honors it is unverified until it renders. `--no-brand` retries without it.
+
+## The Looker Studio door — how to (the GUI floor, measured 2026-09-17)
+
+```powershell
+py viz\build_bq_view.py --build --receipt       # CREATE OR REPLACE VIEW wax_baseball_dbt.v_hr_by_year; prints the Linking API URL; CSV PASS on 400
+```
+
+- Headless half: the view (the chart's exact rows, governed by the same `event_code = 23` rule) and the link — `lookerstudio.google.com/reporting/create?ds.connector=bigQuery&ds.type=TABLE&ds.projectId=…&ds.datasetId=wax_baseball_dbt&ds.tableId=v_hr_by_year&r.reportName=…`. Looker Studio has no authoring API; the Linking API opens a **new report with the view attached as its data source**.
+- GUI half (Wax): open the link → Add a chart → bar → Dimension `yr`, Metric `hr` → screenshot. That's where headless stops, and the README says so — the reader being cut over to Looker Studio gets the honest boundary.
+- Looker proper (the enterprise product) has a full API but no instance here; out of scope.
 
 ## Adding a door
 
