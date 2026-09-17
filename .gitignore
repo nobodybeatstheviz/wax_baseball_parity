@@ -13,3 +13,8 @@ __pycache__/
 # Windows
 Thumbs.db
 desktop.ini
+
+# Build 2.5 viz output: the page regenerates; only the receipts are tracked
+viz/out/*
+!viz/out/*.csv
+!viz/out/*.png

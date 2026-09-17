@@ -1,0 +1,25 @@
+{
+  "_what": "The chart spec every Build 2.5 door reads — one Source, N Presentations. Add a second question as a second file; never fork this one per door.",
+  "id": "hr_by_year",
+  "golden": {"label": "G2 home runs witnessed", "value": 400, "reference": "parity_harness.py REF_G2"},
+  "question": "Home runs I witnessed, by year",
+  "measure": "home_runs_witnessed",
+  "by": "game_year",
+  "mark": "bar",
+  "sort": "year ascending",
+  "title": "Home runs witnessed, by year",
+  "subtitle_pattern": "{door} · 400 home runs · 178 games · 1984–2025",
+  "direct_label": "the maximum only (2003 · 44); everything else lives in the tooltip and the table",
+  "x_label_rule": "label years ending in 0 or 5, plus the first and last; all 34 years are bars",
+  "years_rule": "one bar per year with at least one attended game (34 rows — matches the Tableau Cloud receipt); seasons with no attended game are absent, not zero",
+  "no_legend": "one series — the title names it",
+  "privacy": "no attendee names on this chart",
+  "doors": {
+    "tableau_cloud": {"door": "Tableau Cloud", "inning": 1, "generator": "CODING/wax_baseball_w5_datasource/build_workbook.py"},
+    "tableau_next": {"door": "Tableau Next", "inning": 3, "generator": "viz/build_tn_viz.py (planned)"},
+    "streamlit_snowflake": {"door": "Streamlit in Snowflake", "inning": 6, "generator": "viz/streamlit/ (planned)"},
+    "databricks_aibi": {"door": "Databricks AI/BI", "inning": 6, "generator": "viz/build_lakeview.py (planned)"},
+    "looker_studio": {"door": "Looker Studio", "inning": 2, "generator": "viz/build_bq_view.py (planned, GUI floor)"},
+    "claude_artifact": {"door": "Claude artifact", "inning": 8, "generator": "viz/build_artifact.py"}
+  }
+}
