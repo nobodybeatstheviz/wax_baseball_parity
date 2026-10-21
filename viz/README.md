@@ -23,6 +23,7 @@ takes cheaply and the receipt says what it didn't. Fonts are hard; defaults are 
 |---|---|---|---|---|---|
 | Tableau Cloud | 1st | `../../wax_baseball_w5_datasource/build_workbook.py` | publish + PNG/CSV receipt via the Tableau MCP; NBTV mark color + fonts as a `<style>` block from `chart.json` | nowhere — the red bars took (font: default in the PNG, the server accepted the rule but the render didn't show it) | ✅ 9/10 · restyled 9/17 |
 | **Claude artifact** | 8th | `build_artifact.py` | the HTML + CSV + PNG; the Artifact tool publishes | nowhere | ✅ **2026-09-16** |
+| **Claude Dashboards** (7a BigQuery · 7b Data 360) | 8th | `build_dashboard.py` | the dataset + page + meta documents written to the Dashboard artifact's store from Claude Code (`ArtifactData`); the CSV uploaded as the artifact's asset; receipt = the CSV, PASS on 400 for both engines (identical sha256) | **the live query.** A reader's page calls a claude.ai *connector*, never a local MCP server — so rows fetched through the local BigQuery toolbox / Data 360 jar land as a fixed file (`fixed: true`, SQL in the description). Live needs the Google Cloud BigQuery + Salesforce connectors added in claude.ai settings (not done 10/21). Brand: mark color via CSS ✅; fonts ✗ (external `<link>` is dropped) | ✅ **2026-10-21, fixed-file** · 7a `claude.ai/artifact/UVCzun2keiJBi212JvYqo5` · 7b `claude.ai/artifact/XeKdNekFnRPYECLqPKcppx` · no further build (Wax, 10/21) |
 | **Tableau Next** | 3rd | `build_tn_viz.py` | workspace + viz created through the Beta MCP's `create_workspace` / `create_visualization`; receipt via `run_semantic_query` | the capture ✅ 9/22 (element export, not a page screenshot); the brand ✅ 9/22 (`#DB1D1D` set by hand in the GUI) | ✅ **2026-09-17 built · 9/22 captured** · viz `1AKQL00000MhalT4AR` · ⚡ org expires 2026-10-03 |
 | **Streamlit in Snowflake** | 6th | `streamlit/` (`streamlit_app.py` + `snowflake.yml`) | `snow streamlit deploy` from the key-pair connection; receipt via `query.py snowflake` | the capture ✅ 9/22 (Streamlit's own per-chart download, not a page screenshot); brand: Altair takes the bar color + fonts in code | ✅ **2026-09-17 built · 9/22 captured** · app **dropped 2026-10-05** (container cost — see the how-to); redeploys from `streamlit/` |
 | **Databricks AI/BI** | 6th | `build_lakeview.py` | dashboard JSON → `w.lakeview.create/update` + `publish` (SDK); receipt via `query.py databricks` | the screenshot ✅ 9/21; brand: `spec.mark.colors` honored (red bars) | ✅ **2026-09-17 published** · `01f1b29c59d31633894383c3d451a242` · receipt **PASS 2026-09-21** (400, 34 rows) once the warehouse was started from the GUI |
@@ -111,6 +112,30 @@ py viz\build_bq_view.py --build --receipt       # CREATE OR REPLACE VIEW wax_bas
 - GUI half (Wax): open the link → Add a chart → bar → Dimension `yr`, Metric `hr` → screenshot. That's where headless stops, and the README says so — the reader being cut over to Looker Studio gets the honest boundary.
 - **Measured 9/22:** the Linking API only attaches the data source; it can't preset a fresh report's chart field roles, so the auto-added default chart guessed wrong (`hr` as Dimension summed `yr`, a "can't convert to date" trap when trying to fix it by changing `yr`'s type instead of its role). The fix is a plain field-role swap in the chart editor, no type change needed; Number works fine as a Dimension. The bar chart's own Top-N control also defaults to capping at 10 bars — raise **Number of bars** past 34 (all seasons) rather than hunting for an off switch. Looker Studio's own export is PDF, not PNG (`viz/out/keeping-score-hr-by-year-looker-studio.png`, converted from the PDF via `pymupdf`).
 - Looker proper (the enterprise product) has a full API but no instance here; out of scope.
+
+## The Claude Dashboards door — how to (measured 2026-10-21, closed fixed-file)
+
+```powershell
+py viz\build_dashboard.py --build                                   # BigQuery rows -> CSV (PASS on 400) + dataset/page/meta JSON
+py viz\build_dashboard.py --build --engine data360 --rows-json viz\out\dashboard-data360-rows.json   # the SDM leg
+py viz\build_dashboard.py --build --file-url /_blob/<asset id>      # rerun once the CSV is uploaded, then write the store
+```
+
+1. Claude Code creates the artifact from the Dashboard type (`type_url`), uploads the CSV as an asset (`/_blob/<id>`),
+   reruns the generator with `--file-url`, then writes `dash/meta`, `datasets/hr_by_year`, `files/index.html` in one
+   `ArtifactData` batch. Run the `--file-url` step from PowerShell: Git Bash rewrites `/_blob/…` into a Windows path.
+2. **Where headless stops — the live query.** The type's own rule: a dataset is a call *each reader's page* makes on a
+   claude.ai connector; "a tool that exists only in your session (a server on their computer) can't be called by a
+   dashboard." Both engines here came through local MCP servers, so both datasets are fixed copies with the SQL in the
+   description. Live needs Google Cloud BigQuery (`execute_sql_readonly`) and Salesforce connectors added in claude.ai
+   settings, then a `set` of the dataset to `source.kind: "query"` (`--live connector:tool` emits that shape).
+3. **Data 360 leg:** the SDM answers `d360_sdm_query` with `Game_Year` + `Home_Runs_Witnessed` as `semanticField`s (model-level,
+   no table) — same binding rule as the Tableau Next door. The local jar wants `structuredSemanticQuery` as a JSON *string*.
+   34 rows, 400, byte-identical to the BigQuery CSV.
+4. **Brand ceiling:** mark color is page CSS inside `#dash-root`, so `#DB1D1D` holds. External `<link>`/`<script>` are dropped,
+   so Cascadia/Inter can't load; the stack falls back to the type's own fonts. Every number is marked (`data-source`) and
+   the total is a `dash.calc`, so Sources shows the query, the rows, and the sum.
+5. The type's self-check (`data/users/me/check`) runs only while the dashboard is open in a browser.
 
 ## Adding a door
 

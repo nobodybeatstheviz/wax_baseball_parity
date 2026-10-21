@@ -20,6 +20,7 @@
     "streamlit_snowflake": {"door": "Streamlit in Snowflake", "inning": 6, "generator": "viz/streamlit/ (planned)"},
     "databricks_aibi": {"door": "Databricks AI/BI", "inning": 6, "generator": "viz/build_lakeview.py (planned)"},
     "looker_studio": {"door": "Looker Studio", "inning": 2, "generator": "viz/build_bq_view.py (planned, GUI floor)"},
-    "claude_artifact": {"door": "Claude artifact", "inning": 8, "generator": "viz/build_artifact.py"}
+    "claude_artifact": {"door": "Claude artifact", "inning": 8, "generator": "viz/build_artifact.py"},
+    "claude_dashboards": {"door": "Claude Dashboards", "inning": 8, "generator": "viz/build_dashboard.py (7a BigQuery · 7b Data 360, fixed-file)"}
   }
 }
