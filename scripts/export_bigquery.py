@@ -58,6 +58,22 @@ JOIN_KEY_OVERRIDES: dict[str, str] = {}
 DEFAULT_JOIN_KEY = "game_id"
 FILTER_ANCHOR_TABLE = "fct_attended_games"
 
+# Lahman reference tables (dataset `lahman`, not the dbt marts) — exported for the
+# GCP ingest leg; previously exported ad hoc, now generator-owned. hall_of_fame gets
+# a derived composite ballot key because the DLO needs a unique PK: playerID alone
+# dedupes 6,426 ballot rows to one arbitrary row per player under TOTAL_REPLACE,
+# which broke HOF_Batters_Seen_Graph_GCP (measured 24 vs 35, 2026-09-06).
+# playerID_yearid_votedBy is unique across all 6,426 rows (verified in BigQuery).
+LAHMAN_DATASET = "lahman"
+LAHMAN_EXPORTS: dict[str, tuple[str, str | None]] = {
+    # output file stem -> (source table, derived-column SQL or None)
+    "lahman_people": ("people", None),
+    "lahman_halloffame": (
+        "hall_of_fame",
+        "CONCAT(playerID, '_', CAST(yearid AS STRING), '_', votedBy) AS ballot_key",
+    ),
+}
+
 
 def _client() -> bigquery.Client:
     return bigquery.Client(project=PROJECT)
@@ -92,6 +108,13 @@ def _export_table(client: bigquery.Client, table: str) -> pd.DataFrame:
     return client.query(query).to_dataframe()
 
 
+def _export_lahman(client: bigquery.Client, stem: str) -> pd.DataFrame:
+    table, derived = LAHMAN_EXPORTS[stem]
+    cols = f"t.*, {derived}" if derived else "t.*"
+    query = f"SELECT {cols} FROM `{PROJECT}.{LAHMAN_DATASET}.{table}` AS t"
+    return client.query(query).to_dataframe()
+
+
 def main() -> None:
     DATA_DIR.mkdir(parents=True, exist_ok=True)
     client = _client()
@@ -103,6 +126,14 @@ def main() -> None:
         out_path = DATA_DIR / f"{table}.parquet"
         df.to_parquet(out_path, index=False)
         counts[table] = len(df)
+        print(f"  -> wrote {out_path} ({len(df):,} rows, {len(df.columns)} cols)")
+
+    print(f"Exporting {len(LAHMAN_EXPORTS)} Lahman tables from {PROJECT}.{LAHMAN_DATASET} ...")
+    for stem in LAHMAN_EXPORTS:
+        df = _export_lahman(client, stem)
+        out_path = DATA_DIR / f"{stem}.parquet"
+        df.to_parquet(out_path, index=False)
+        counts[stem] = len(df)
         print(f"  -> wrote {out_path} ({len(df):,} rows, {len(df.columns)} cols)")
 
     print("\nExport summary:")
