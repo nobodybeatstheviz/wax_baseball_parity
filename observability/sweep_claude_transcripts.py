@@ -230,7 +230,7 @@ def render_reader(df: pd.DataFrame, top_month: pd.DataFrame) -> str:
         "---",
         f"*Table: `{BQ_PROJECT}.{BQ_DATASET}.{BQ_TABLE}` · Source: `~/.claude/projects/` · "
         "sweep: `CODING/wax_baseball_parity/observability/sweep_claude_transcripts.py` · "
-        "runs at `/sync-check` close.*",
+        "run on demand.*",
         "",
     ]
     return "\n".join(lines)

@@ -161,8 +161,8 @@ py observability\sweep_claude_transcripts.py             # sweep + load + regene
 py observability\sweep_claude_transcripts.py --dry-run    # counts only, no BigQuery write
 ```
 
-Runs automatically at the end of every session as `/sync-check` step 3c — no manual
-invocation needed. Every field read is defensive (Anthropic documents the JSONL format
+Run on demand — nothing schedules it. The load is a full rebuild from the transcripts,
+so one run brings the table and the reader current. Every field read is defensive (Anthropic documents the JSONL format
 as internal and unstable); a future format change shows up as a lower row count, not a
 crash. Honest limit, stated in the reader itself: Claude-side surfaces only —
 Agentforce and Tableau Next calls are covered by their own platform's native
